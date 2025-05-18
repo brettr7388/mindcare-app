@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import '../providers/mood_provider.dart';
-import 'check_in_screen.dart';
 import 'chat_screen.dart';
 import 'resources_screen.dart';
 import 'profile_screen.dart';
 import 'wellness_screen.dart';
 import 'auth_screen.dart';
+import 'discussion_board_screen.dart';
+import 'mood_history_screen.dart';
+import '../widgets/mood_slider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,15 +21,75 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  double _moodValue = 3.0;
+  bool _hasCheckedIn = false;
 
   final List<Widget> _screens = [
     const _DashboardTab(),
-    const CheckInScreen(),
     const ChatScreen(),
     const WellnessScreen(),
     const ResourcesScreen(),
     const ProfileScreen(),
   ];
+
+  void _updateMoodValue(double value) {
+    setState(() {
+      _moodValue = value;
+    });
+  }
+
+  Future<void> _submitMood() async {
+    try {
+      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+      await moodProvider.addMood(_moodValue.round(), '');
+      
+      if (mounted) {
+        setState(() {
+          _hasCheckedIn = true;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Mood saved for today!',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error: ${e.toString()}',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.mood),
-              label: 'Check In',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.chat),
               label: 'Chat',
             ),
@@ -100,8 +158,161 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _DashboardTab extends StatelessWidget {
+class _DashboardTab extends StatefulWidget {
   const _DashboardTab();
+
+  @override
+  State<_DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<_DashboardTab> {
+  double _moodValue = 3.0;
+  bool _isSubmitting = false;
+  List<Map<String, dynamic>> _dailyTips = [];
+  int _currentTipIndex = 0;
+
+  final List<Map<String, dynamic>> _allTips = [
+    {
+      'title': 'Practice Mindfulness',
+      'description': 'Take a few minutes each day to focus on your breath and be present in the moment.',
+      'icon': Icons.self_improvement,
+    },
+    {
+      'title': 'Stay Hydrated',
+      'description': 'Drinking enough water can help improve your mood and energy levels.',
+      'icon': Icons.water_drop,
+    },
+    {
+      'title': 'Get Moving',
+      'description': 'Even a short walk can boost your mood and reduce stress.',
+      'icon': Icons.directions_walk,
+    },
+    {
+      'title': 'Connect with Others',
+      'description': 'Reach out to friends or family for a meaningful conversation.',
+      'icon': Icons.people,
+    },
+    {
+      'title': 'Practice Gratitude',
+      'description': 'Write down three things you\'re grateful for each day.',
+      'icon': Icons.favorite,
+    },
+    {
+      'title': 'Limit Screen Time',
+      'description': 'Take regular breaks from digital devices to reduce eye strain and stress.',
+      'icon': Icons.phone_android,
+    },
+    {
+      'title': 'Get Enough Sleep',
+      'description': 'Aim for 7-9 hours of quality sleep each night.',
+      'icon': Icons.bedtime,
+    },
+    {
+      'title': 'Eat Mindfully',
+      'description': 'Pay attention to what and how you eat, savoring each bite.',
+      'icon': Icons.restaurant,
+    },
+    {
+      'title': 'Learn Something New',
+      'description': 'Challenge your mind with a new skill or hobby.',
+      'icon': Icons.school,
+    },
+    {
+      'title': 'Express Yourself',
+      'description': 'Write, draw, or create something to express your feelings.',
+      'icon': Icons.brush,
+    },
+    {
+      'title': 'Practice Deep Breathing',
+      'description': 'Take deep breaths to calm your mind and reduce anxiety.',
+      'icon': Icons.air,
+    },
+    {
+      'title': 'Stay Organized',
+      'description': 'A clean and organized space can help clear your mind.',
+      'icon': Icons.cleaning_services,
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTips();
+  }
+
+  void _refreshTips() {
+    setState(() {
+      _dailyTips = List.from(_allTips)..shuffle();
+      _currentTipIndex = 0;
+    });
+  }
+
+  void _updateMoodValue(double value) {
+    setState(() {
+      _moodValue = value;
+    });
+  }
+
+  Future<void> _submitMood() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+      await moodProvider.addMood(_moodValue.round(), '');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Mood saved for today!',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error: ${e.toString()}',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,50 +382,63 @@ class _DashboardTab extends StatelessWidget {
                                       color: Colors.white,
                                     ),
                                   ),
-                                  if (todayMood.note.isNotEmpty)
-                                    Text(
-                                      todayMood.note,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        color: Colors.white.withOpacity(0.8),
-                                      ),
-                                    ),
                                 ],
                               ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.history,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const MoodHistoryScreen(),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
                       ] else ...[
                         Text(
-                          'No mood recorded today',
+                          'How are you feeling today?',
                           style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const CheckInScreen(),
+                        const SizedBox(height: 24),
+                        MoodSlider(
+                          value: _moodValue,
+                          onChanged: _updateMoodValue,
+                        ),
+                        const SizedBox(height: 24),
+                        Center(
+                          child: SizedBox(
+                            width: 200,
+                            child: ElevatedButton(
+                              onPressed: _isSubmitting ? null : _submitMood,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.blue.shade900,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.blue.shade900,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Record Your Mood',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              child: _isSubmitting
+                                  ? const CircularProgressIndicator()
+                                  : Text(
+                                      'Save Mood',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
@@ -225,69 +449,7 @@ class _DashboardTab extends StatelessWidget {
               },
             ),
             const SizedBox(height: 24),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Quick Actions',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _QuickActionButton(
-                        icon: Icons.chat,
-                        label: 'Chat',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ChatScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _QuickActionButton(
-                        icon: Icons.spa,
-                        label: 'Wellness',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const WellnessScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _QuickActionButton(
-                        icon: Icons.mood,
-                        label: 'Check In',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const CheckInScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            _buildMotivationalBoard(context),
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
@@ -302,26 +464,37 @@ class _DashboardTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Daily Tips',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Daily Tips',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        onPressed: _refreshTips,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (_dailyTips.isNotEmpty) ...[
+                    _DailyTipCard(
+                      title: _dailyTips[0]['title'] as String,
+                      description: _dailyTips[0]['description'] as String,
+                      icon: _dailyTips[0]['icon'] as IconData,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _DailyTipCard(
-                    title: 'Practice Mindfulness',
-                    description: 'Take a few minutes each day to focus on your breath and be present in the moment.',
-                    icon: Icons.self_improvement,
-                  ),
-                  const SizedBox(height: 16),
-                  _DailyTipCard(
-                    title: 'Stay Hydrated',
-                    description: 'Drinking enough water can help improve your mood and energy levels.',
-                    icon: Icons.water_drop,
-                  ),
+                    const SizedBox(height: 16),
+                    _DailyTipCard(
+                      title: _dailyTips[1]['title'] as String,
+                      description: _dailyTips[1]['description'] as String,
+                      icon: _dailyTips[1]['icon'] as IconData,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -363,51 +536,6 @@ class _DashboardTab extends StatelessWidget {
       default:
         return 'Unknown';
     }
-  }
-}
-
-class _QuickActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 32, color: Colors.white),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -472,4 +600,90 @@ class _DailyTipCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildMotivationalBoard(BuildContext context) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const DiscussionBoardScreen()),
+      );
+    },
+    child: Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.blue.shade900,
+            Colors.purple.shade800,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.forum,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Discussion Board',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Share your thoughts and connect with others',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white.withOpacity(0.8),
+                size: 20,
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 } 

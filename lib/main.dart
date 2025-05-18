@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'providers/auth_provider.dart';
 import 'providers/mood_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/post_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() async {
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
-  
-  // Initialize MoodProvider's Hive box
-  final moodProvider = MoodProvider();
-  await moodProvider.initHive();
-  
   runApp(const MyApp());
 }
 
@@ -28,8 +23,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => MoodProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => PostProvider()),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'MindCare',
         theme: ThemeData(
           primarySwatch: Colors.blue,

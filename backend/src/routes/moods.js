@@ -22,6 +22,26 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Update a mood entry
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { rating, note } = req.body;
+    const mood = await Mood.findOne({ _id: req.params.id, user: req.user._id });
+
+    if (!mood) {
+      return res.status(404).json({ message: 'Mood not found' });
+    }
+
+    mood.rating = rating;
+    mood.note = note;
+    await mood.save();
+
+    res.json(mood);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // Get user's moods
 router.get('/', auth, async (req, res) => {
   try {

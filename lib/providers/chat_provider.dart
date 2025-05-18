@@ -104,7 +104,8 @@ class ChatProvider with ChangeNotifier {
         _messages.add(aiMessage);
       } else {
         final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Failed to send message');
+        final errorMessage = errorData['details'] ?? errorData['message'] ?? 'Failed to send message';
+        throw Exception(errorMessage);
       }
     } on TimeoutException {
       print('Chat error: Request timed out');
@@ -116,9 +117,19 @@ class ChatProvider with ChangeNotifier {
       ));
     } catch (e) {
       print('Chat error: $e'); // For debugging
+      String errorMessage = 'Sorry, there was an error processing your message.';
+      
+      if (e.toString().contains('Not authenticated')) {
+        errorMessage = 'Please log in again to continue chatting.';
+      } else if (e.toString().contains('timed out')) {
+        errorMessage = 'The request timed out. Please check your internet connection and try again.';
+      } else if (e.toString().contains('Error getting AI response')) {
+        errorMessage = 'Sorry, I\'m having trouble responding right now. Please try again in a moment.';
+      }
+      
       _messages.add(Message(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        content: 'Sorry, there was an error processing your message. Please try again.',
+        content: errorMessage,
         isUser: false,
         timestamp: DateTime.now(),
       ));

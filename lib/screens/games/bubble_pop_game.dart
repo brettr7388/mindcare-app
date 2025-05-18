@@ -198,7 +198,7 @@ class _BubblePopGameState extends State<BubblePopGame> with SingleTickerProvider
                         color: Colors.black54,
                       ),
                     ),
-                    const SizedBox(width: 40),
+                    const SizedBox(width: 40), // For balance
                   ],
                 ),
               ),

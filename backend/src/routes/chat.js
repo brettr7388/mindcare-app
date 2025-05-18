@@ -45,6 +45,10 @@ Remember:
 router.post('/', auth, async (req, res) => {
   try {
     const { message } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ message: 'Message is required' });
+    }
 
     // Save user message
     const userMessage = new Message({
@@ -56,9 +60,8 @@ router.post('/', auth, async (req, res) => {
 
     // Get conversation history
     const recentMessages = await Message.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .reverse();
+      .sort({ createdAt: 1 })
+      .limit(5);
 
     // Prepare conversation history for context
     const conversationHistory = recentMessages.map(msg => ({
@@ -66,41 +69,52 @@ router.post('/', auth, async (req, res) => {
       content: msg.content
     }));
 
-    // Get AI response
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT
-        },
-        ...conversationHistory,
-        {
-          role: "user",
-          content: message
-        }
-      ],
-      temperature: 0.8,
-      max_tokens: 250,
-    });
+    try {
+      // Get AI response
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: SYSTEM_PROMPT
+          },
+          ...conversationHistory,
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 250,
+      });
 
-    const aiResponse = completion.choices[0].message.content;
+      const aiResponse = completion.choices[0].message.content;
 
-    // Save AI response
-    const aiMessage = new Message({
-      user: req.user._id,
-      content: aiResponse,
-      isUser: false,
-    });
-    await aiMessage.save();
+      // Save AI response
+      const aiMessage = new Message({
+        user: req.user._id,
+        content: aiResponse,
+        isUser: false,
+      });
+      await aiMessage.save();
 
-    res.json({
-      id: aiMessage._id,
-      response: aiResponse,
-    });
+      res.json({
+        id: aiMessage._id,
+        response: aiResponse,
+      });
+    } catch (openaiError) {
+      console.error('OpenAI API error:', openaiError);
+      res.status(500).json({ 
+        message: 'Error getting AI response',
+        details: openaiError.message 
+      });
+    }
   } catch (error) {
     console.error('Chat error:', error);
-    res.status(500).json({ message: 'Error processing message' });
+    res.status(500).json({ 
+      message: 'Error processing message',
+      details: error.message 
+    });
   }
 });
 
@@ -108,12 +122,16 @@ router.post('/', auth, async (req, res) => {
 router.get('/history', auth, async (req, res) => {
   try {
     const messages = await Message.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: 1 })
       .limit(50);
 
-    res.json(messages.reverse());
+    res.json(messages);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('History error:', error);
+    res.status(400).json({ 
+      message: 'Error fetching chat history',
+      details: error.message 
+    });
   }
 });
 

@@ -1,71 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:hive/hive.dart';
+import '../models/mood.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-
-class Mood {
-  final String id;
-  final int rating;
-  final String note;
-  final DateTime timestamp;
-
-  Mood({
-    required this.id,
-    required this.rating,
-    required this.note,
-    required this.timestamp,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'rating': rating,
-    'note': note,
-    'timestamp': timestamp.toIso8601String(),
-  };
-
-  factory Mood.fromJson(Map<String, dynamic> json) => Mood(
-    id: json['id'],
-    rating: json['rating'],
-    note: json['note'],
-    timestamp: DateTime.parse(json['timestamp']),
-  );
-}
+import '../main.dart';
 
 class MoodProvider with ChangeNotifier {
   List<Mood> _moods = [];
-  Box<Mood>? _moodBox;
-  static const String _baseUrl = 'http://192.168.86.212:3000/api';
-
   List<Mood> get moods => _moods;
 
-  Future<void> initHive() async {
-    if (!Hive.isBoxOpen('moods')) {
-      _moodBox = await Hive.openBox<Mood>('moods');
-      _loadMoodsFromHive();
-    }
-  }
-
-  void _loadMoodsFromHive() {
-    if (_moodBox != null) {
-      _moods = _moodBox!.values.toList();
-      notifyListeners();
-    }
-  }
-
-  Future<void> addMood(BuildContext context, int rating, String note) async {
+  Future<void> addMood(int rating, String note) async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.token == null) {
-        throw Exception('Not authenticated');
-      }
-
       final response = await http.post(
-        Uri.parse('$_baseUrl/moods'),
+        Uri.parse('http://192.168.86.212:3000/api/moods'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${authProvider.token}',
+          'Authorization': 'Bearer ${await _getToken()}',
         },
         body: json.encode({
           'rating': rating,
@@ -75,61 +26,85 @@ class MoodProvider with ChangeNotifier {
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-        final mood = Mood(
-          id: data['_id'], // MongoDB uses _id
+        final newMood = Mood(
+          id: data['_id'],
           rating: rating,
           note: note,
           timestamp: DateTime.parse(data['createdAt']),
         );
-        
-        _moods.add(mood);
-        await _moodBox?.put(mood.id, mood);
+        _moods.insert(0, newMood);
         notifyListeners();
       } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Failed to add mood');
+        throw Exception('Failed to add mood: ${response.body}');
       }
     } catch (e) {
-      print('Error adding mood: $e'); // Debug print
-      rethrow;
+      print('Error adding mood: $e');
+      throw Exception('Failed to add mood: $e');
     }
   }
 
-  Future<void> fetchMoods(BuildContext context) async {
+  Future<void> fetchMoods() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.token == null) {
-        throw Exception('Not authenticated');
-      }
-
       final response = await http.get(
-        Uri.parse('$_baseUrl/moods'),
+        Uri.parse('http://192.168.86.212:3000/api/moods'),
         headers: {
-          'Authorization': 'Bearer ${authProvider.token}',
+          'Authorization': 'Bearer ${await _getToken()}',
         },
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        _moods = data.map((json) => Mood(
-          id: json['_id'],
-          rating: json['rating'],
-          note: json['note'] ?? '',
-          timestamp: DateTime.parse(json['createdAt']),
-        )).toList();
-        
-        await _moodBox?.clear();
-        for (var mood in _moods) {
-          await _moodBox?.put(mood.id, mood);
-        }
+        _moods = data.map((json) => Mood.fromJson(json)).toList();
         notifyListeners();
       } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Failed to fetch moods');
+        throw Exception('Failed to fetch moods: ${response.body}');
       }
     } catch (e) {
-      print('Error fetching moods: $e'); // Debug print
-      rethrow;
+      print('Error fetching moods: $e');
+      throw Exception('Failed to fetch moods: $e');
+    }
+  }
+
+  Future<String> _getToken() async {
+    // Get the token from your auth provider
+    final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+    return authProvider.token ?? '';
+  }
+
+  Future<void> updateMood(String id, int rating, String note) async {
+    try {
+      final response = await http.put(
+        Uri.parse('http://192.168.86.212:3000/api/moods/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await _getToken()}',
+        },
+        body: json.encode({
+          'rating': rating,
+          'note': note,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final updatedMood = Mood(
+          id: data['_id'],
+          rating: rating,
+          note: note,
+          timestamp: DateTime.parse(data['createdAt']),
+        );
+        
+        final index = _moods.indexWhere((mood) => mood.id == id);
+        if (index != -1) {
+          _moods[index] = updatedMood;
+          notifyListeners();
+        }
+      } else {
+        throw Exception('Failed to update mood: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating mood: $e');
+      throw Exception('Failed to update mood: $e');
     }
   }
 } 

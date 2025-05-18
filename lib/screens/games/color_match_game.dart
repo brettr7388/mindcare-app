@@ -132,7 +132,7 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 40),
+                    const SizedBox(width: 40), // For balance
                   ],
                 ),
               ),
