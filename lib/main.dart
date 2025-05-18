@@ -10,6 +10,11 @@ import 'screens/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  
+  // Initialize MoodProvider's Hive box
+  final moodProvider = MoodProvider();
+  await moodProvider.initHive();
+  
   runApp(const MyApp());
 }
 

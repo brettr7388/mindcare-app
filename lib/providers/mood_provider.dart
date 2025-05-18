@@ -36,6 +36,7 @@ class Mood {
 class MoodProvider with ChangeNotifier {
   List<Mood> _moods = [];
   Box<Mood>? _moodBox;
+  static const String _baseUrl = 'http://192.168.86.212:3000/api';
 
   List<Mood> get moods => _moods;
 
@@ -56,8 +57,12 @@ class MoodProvider with ChangeNotifier {
   Future<void> addMood(BuildContext context, int rating, String note) async {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.token == null) {
+        throw Exception('Not authenticated');
+      }
+
       final response = await http.post(
-        Uri.parse('https://your-api.com/api/moods'),
+        Uri.parse('$_baseUrl/moods'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authProvider.token}',
@@ -71,19 +76,21 @@ class MoodProvider with ChangeNotifier {
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
         final mood = Mood(
-          id: data['id'],
+          id: data['_id'], // MongoDB uses _id
           rating: rating,
           note: note,
-          timestamp: DateTime.now(),
+          timestamp: DateTime.parse(data['createdAt']),
         );
         
         _moods.add(mood);
         await _moodBox?.put(mood.id, mood);
         notifyListeners();
       } else {
-        throw Exception('Failed to add mood');
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to add mood');
       }
     } catch (e) {
+      print('Error adding mood: $e'); // Debug print
       rethrow;
     }
   }
@@ -91,8 +98,12 @@ class MoodProvider with ChangeNotifier {
   Future<void> fetchMoods(BuildContext context) async {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.token == null) {
+        throw Exception('Not authenticated');
+      }
+
       final response = await http.get(
-        Uri.parse('https://your-api.com/api/moods'),
+        Uri.parse('$_baseUrl/moods'),
         headers: {
           'Authorization': 'Bearer ${authProvider.token}',
         },
@@ -100,16 +111,24 @@ class MoodProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        _moods = data.map((json) => Mood.fromJson(json)).toList();
+        _moods = data.map((json) => Mood(
+          id: json['_id'],
+          rating: json['rating'],
+          note: json['note'] ?? '',
+          timestamp: DateTime.parse(json['createdAt']),
+        )).toList();
+        
         await _moodBox?.clear();
         for (var mood in _moods) {
           await _moodBox?.put(mood.id, mood);
         }
         notifyListeners();
       } else {
-        throw Exception('Failed to fetch moods');
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to fetch moods');
       }
     } catch (e) {
+      print('Error fetching moods: $e'); // Debug print
       rethrow;
     }
   }

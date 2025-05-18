@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import 'auth_screen.dart';
 
@@ -9,31 +10,110 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-              await authProvider.logout();
-              if (!context.mounted) return;
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const AuthScreen()),
-              );
-            },
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade900,
+              Colors.purple.shade800,
+            ],
           ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const _ProfileHeader(),
-          const SizedBox(height: 24),
-          const _SettingsSection(),
-          const SizedBox(height: 24),
-          const _AboutSection(),
-        ],
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    Text(
+                      'Profile',
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 40), // For balance
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const _ProfileHeader(),
+                      const SizedBox(height: 24),
+                      const _SettingsSection(),
+                      const SizedBox(height: 24),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Account',
+                              style: GoogleFonts.poppins(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ListTile(
+                              onTap: () async {
+                                await Provider.of<AuthProvider>(context, listen: false).logout();
+                                if (!context.mounted) return;
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                                );
+                              },
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.logout,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              title: Text(
+                                'Logout',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -46,27 +126,48 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const CircleAvatar(
-              radius: 50,
-              child: Icon(Icons.person, size: 50),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              authProvider.userName ?? 'User Name',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              authProvider.userEmail ?? 'user@example.com',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
         ),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.person,
+              size: 64,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            authProvider.userName ?? 'User Name',
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            authProvider.userEmail ?? 'user@example.com',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.8),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -86,21 +187,31 @@ class _SettingsSectionState extends State<_SettingsSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Settings',
-              style: Theme.of(context).textTheme.titleLarge,
+          Text(
+            'Settings',
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
-          const Divider(),
-          SwitchListTile(
-            title: const Text('Push Notifications'),
-            subtitle: const Text('Receive daily check-in reminders'),
+          const SizedBox(height: 16),
+          _SettingsTile(
+            title: 'Push Notifications',
+            subtitle: 'Receive daily check-in reminders',
             value: _notificationsEnabled,
             onChanged: (value) {
               setState(() {
@@ -108,10 +219,10 @@ class _SettingsSectionState extends State<_SettingsSection> {
               });
             },
           ),
-          const Divider(),
-          SwitchListTile(
-            title: const Text('Dark Mode'),
-            subtitle: const Text('Use dark theme'),
+          const Divider(color: Colors.white24),
+          _SettingsTile(
+            title: 'Dark Mode',
+            subtitle: 'Use dark theme',
             value: _darkModeEnabled,
             onChanged: (value) {
               setState(() {
@@ -119,10 +230,10 @@ class _SettingsSectionState extends State<_SettingsSection> {
               });
             },
           ),
-          const Divider(),
-          SwitchListTile(
-            title: const Text('Data Sync'),
-            subtitle: const Text('Sync data across devices'),
+          const Divider(color: Colors.white24),
+          _SettingsTile(
+            title: 'Data Sync',
+            subtitle: 'Sync data across devices',
             value: _dataSyncEnabled,
             onChanged: (value) {
               setState(() {
@@ -132,6 +243,45 @@ class _SettingsSectionState extends State<_SettingsSection> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingsTile({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          color: Colors.white.withOpacity(0.8),
+        ),
+      ),
+      value: value,
+      onChanged: onChanged,
+      activeColor: Colors.white,
+      activeTrackColor: Colors.white.withOpacity(0.5),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';  // Add this import for TimeoutException
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -35,10 +36,22 @@ class Message {
 class ChatProvider with ChangeNotifier {
   List<Message> _messages = [];
   bool _isLoading = false;
-  static const String _baseUrl = 'http://76.233.7.53:3000/api';
+  static const String _baseUrl = 'http://192.168.86.212:3000/api';
 
   List<Message> get messages => _messages;
   bool get isLoading => _isLoading;
+
+  void addWelcomeMessage() {
+    if (_messages.isEmpty) {
+      _messages.add(Message(
+        id: 'welcome',
+        content: 'Hello! I\'m your AI therapist. I\'m here to provide a safe space for you to express yourself. How are you feeling today?',
+        isUser: false,
+        timestamp: DateTime.now(),
+      ));
+      notifyListeners();
+    }
+  }
 
   Future<void> sendMessage(BuildContext context, String content) async {
     try {
@@ -70,6 +83,11 @@ class ChatProvider with ChangeNotifier {
         body: json.encode({
           'message': content,
         }),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Request timed out');
+        },
       );
 
       print('Response status: ${response.statusCode}'); // Debug print
@@ -88,9 +106,16 @@ class ChatProvider with ChangeNotifier {
         final errorData = json.decode(response.body);
         throw Exception(errorData['message'] ?? 'Failed to send message');
       }
+    } on TimeoutException {
+      print('Chat error: Request timed out');
+      _messages.add(Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        content: 'Sorry, the request timed out. Please check your internet connection and try again.',
+        isUser: false,
+        timestamp: DateTime.now(),
+      ));
     } catch (e) {
       print('Chat error: $e'); // For debugging
-      // Add error message
       _messages.add(Message(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         content: 'Sorry, there was an error processing your message. Please try again.',
