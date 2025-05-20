@@ -11,6 +11,17 @@ class MoodHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Mood History',
+          style: GoogleFonts.poppins(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.blue.shade900,
+        foregroundColor: Colors.white,
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -22,59 +33,31 @@ class MoodHistoryScreen extends StatelessWidget {
             ],
           ),
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Mood History',
-                      style: GoogleFonts.poppins(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+        child: Consumer<MoodProvider>(
+          builder: (context, moodProvider, child) {
+            final moods = moodProvider.moods;
+            
+            if (moods.isEmpty) {
+              return Center(
+                child: Text(
+                  'No mood history yet',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Consumer<MoodProvider>(
-                  builder: (context, moodProvider, child) {
-                    final moods = moodProvider.moods;
-                    
-                    if (moods.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No mood history yet',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.8),
-                          ),
-                        ),
-                      );
-                    }
+              );
+            }
 
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: moods.length,
-                      itemBuilder: (context, index) {
-                        final mood = moods[index];
-                        return _MoodHistoryCard(mood: mood);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: moods.length,
+              itemBuilder: (context, index) {
+                final mood = moods[index];
+                return _MoodHistoryCard(mood: mood);
+              },
+            );
+          },
         ),
       ),
     );
@@ -84,9 +67,7 @@ class MoodHistoryScreen extends StatelessWidget {
 class _MoodHistoryCard extends StatefulWidget {
   final Mood mood;
 
-  const _MoodHistoryCard({
-    required this.mood,
-  });
+  const _MoodHistoryCard({required this.mood});
 
   @override
   State<_MoodHistoryCard> createState() => _MoodHistoryCardState();
@@ -95,6 +76,7 @@ class _MoodHistoryCard extends StatefulWidget {
 class _MoodHistoryCardState extends State<_MoodHistoryCard> {
   bool _isEditing = false;
   double _moodValue = 0;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -102,155 +84,8 @@ class _MoodHistoryCardState extends State<_MoodHistoryCard> {
     _moodValue = widget.mood.rating.toDouble();
   }
 
-  Future<void> _updateMood() async {
-    try {
-      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
-      await moodProvider.updateMood(widget.mood.id, _moodValue.round(), widget.mood.note);
-      
-      if (mounted) {
-        setState(() {
-          _isEditing = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Mood updated successfully!',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error updating mood: ${e.toString()}',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  _getMoodIcon(widget.mood.rating),
-                  size: 32,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getMoodText(widget.mood.rating),
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        _formatDate(widget.mood.timestamp),
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    _isEditing ? Icons.save : Icons.edit,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    if (_isEditing) {
-                      _updateMood();
-                    } else {
-                      setState(() {
-                        _isEditing = true;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-            if (_isEditing) ...[
-              const SizedBox(height: 16),
-              MoodSlider(
-                value: _moodValue,
-                onChanged: (value) {
-                  setState(() {
-                    _moodValue = value;
-                  });
-                },
-              ),
-            ],
-            if (widget.mood.note.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  widget.mood.note,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}/${date.year}';
   }
 
   IconData _getMoodIcon(int rating) {
@@ -273,21 +108,254 @@ class _MoodHistoryCardState extends State<_MoodHistoryCard> {
   String _getMoodText(int rating) {
     switch (rating) {
       case 1:
-        return 'Very Bad';
+        return 'Very Sad';
       case 2:
-        return 'Bad';
+        return 'Sad';
       case 3:
         return 'Neutral';
       case 4:
-        return 'Good';
+        return 'Happy';
       case 5:
-        return 'Very Good';
+        return 'Very Happy';
       default:
-        return 'Unknown';
+        return 'Neutral';
     }
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  Future<void> _updateMood() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+      await moodProvider.updateMood(widget.mood.id, _moodValue.round());
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Mood updated successfully!',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        setState(() {
+          _isEditing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error updating mood: ${e.toString()}',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            title: Row(
+              children: [
+                Text(
+                  _formatDate(widget.mood.timestamp),
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                if (!_isEditing)
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _isEditing = true;
+                      });
+                    },
+                  ),
+              ],
+            ),
+            subtitle: _isEditing
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.white,
+                          inactiveTrackColor: Colors.white.withOpacity(0.3),
+                          thumbColor: Colors.white,
+                          overlayColor: Colors.white.withOpacity(0.2),
+                          valueIndicatorColor: Colors.white,
+                          valueIndicatorTextStyle: GoogleFonts.poppins(
+                            color: Colors.blue.shade900,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: Slider(
+                          value: _moodValue,
+                          min: 1,
+                          max: 5,
+                          divisions: 4,
+                          label: _getMoodText(_moodValue.round()),
+                          onChanged: (value) {
+                            setState(() {
+                              _moodValue = value;
+                            });
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Icon(Icons.sentiment_very_dissatisfied, size: 32, color: Colors.red),
+                            Icon(Icons.sentiment_dissatisfied, size: 32, color: Colors.orange),
+                            Icon(Icons.sentiment_neutral, size: 32, color: Colors.yellow),
+                            Icon(Icons.sentiment_satisfied, size: 32, color: Colors.lightGreen),
+                            Icon(Icons.sentiment_very_satisfied, size: 32, color: Colors.green),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isEditing = false;
+                                _moodValue = widget.mood.rating.toDouble();
+                              });
+                            },
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: _isSubmitting ? null : _updateMood,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.blue.shade900,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'Save',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Icon(
+                        _getMoodIcon(widget.mood.rating),
+                        size: 32,
+                        color: _getMoodColor(widget.mood.rating),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _getMoodText(widget.mood.rating),
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getMoodColor(int rating) {
+    switch (rating) {
+      case 1:
+        return Colors.red;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.yellow;
+      case 4:
+        return Colors.lightGreen;
+      case 5:
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 } 

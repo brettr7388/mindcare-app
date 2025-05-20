@@ -50,11 +50,23 @@ class _ChatScreenState extends State<ChatScreen> {
     final message = _messageController.text;
     _messageController.clear();
 
+    // Scroll to bottom before sending message
+    _scrollToBottom();
+
     await Provider.of<ChatProvider>(context, listen: false)
         .sendMessage(context, message);
 
+    // Add a small delay to ensure the new message is added to the list
     await Future.delayed(const Duration(milliseconds: 100));
-    _scrollToBottom();
+    
+    // Scroll to bottom again after the message is added
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<void> _sendQuickMessage(String message) async {
@@ -62,11 +74,23 @@ class _ChatScreenState extends State<ChatScreen> {
       _showWelcome = false;
     });
 
+    // Scroll to bottom before sending message
+    _scrollToBottom();
+
     await Provider.of<ChatProvider>(context, listen: false)
         .sendMessage(context, message);
     
+    // Add a small delay to ensure the new message is added to the list
     await Future.delayed(const Duration(milliseconds: 100));
-    _scrollToBottom();
+    
+    // Scroll to bottom again after the message is added
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override

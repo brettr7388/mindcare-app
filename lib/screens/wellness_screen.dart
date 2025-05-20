@@ -48,15 +48,15 @@ class WellnessScreen extends StatelessWidget {
                         items: [
                           WellnessItem(
                             title: 'Guided Meditation',
-                            description: '10-minute guided meditation for stress relief',
+                            description: '5-minute guided meditation for stress relief',
                             icon: Icons.self_improvement,
                             url: 'https://www.youtube.com/watch?v=inpok4MKVLM',
                           ),
                           WellnessItem(
                             title: 'Breathing Exercise',
-                            description: '5-minute breathing exercise for anxiety',
+                            description: '2-minute guided deep breathing exercise for anxiety',
                             icon: Icons.air,
-                            url: 'https://www.youtube.com/watch?v=5G5J4cX5J9Y',
+                            url: 'https://www.youtube.com/watch?v=uNeoLT1axSI',
                           ),
                         ],
                       ),
@@ -68,7 +68,7 @@ class WellnessScreen extends StatelessWidget {
                             title: 'Calming Nature Sounds',
                             description: 'Relaxing sounds of nature',
                             icon: Icons.landscape,
-                            url: 'https://www.youtube.com/watch?v=1ZYbU82GVz4',
+                            url: 'https://www.youtube.com/watch?v=eKFTSSKCzWA',
                           ),
                           WellnessItem(
                             title: 'Meditation Music',
@@ -96,7 +96,7 @@ class WellnessScreen extends StatelessWidget {
                           ),
                           WellnessItem(
                             title: 'Color Match',
-                            description: 'Test your color perception and memory',
+                            description: 'Test your color perception to help you destress',
                             icon: Icons.color_lens,
                             onTap: () {
                               Navigator.of(context).push(

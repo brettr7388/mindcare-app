@@ -1,36 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:async';  // Add this import for TimeoutException
+import 'dart:async';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
 class Message {
-  final String id;
   final String content;
   final bool isUser;
   final DateTime timestamp;
 
   Message({
-    required this.id,
     required this.content,
     required this.isUser,
     required this.timestamp,
   });
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'content': content,
-    'isUser': isUser,
-    'timestamp': timestamp.toIso8601String(),
-  };
-
-  factory Message.fromJson(Map<String, dynamic> json) => Message(
-    id: json['id'],
-    content: json['content'],
-    isUser: json['isUser'],
-    timestamp: DateTime.parse(json['timestamp']),
-  );
 }
 
 class ChatProvider with ChangeNotifier {
@@ -44,8 +28,7 @@ class ChatProvider with ChangeNotifier {
   void addWelcomeMessage() {
     if (_messages.isEmpty) {
       _messages.add(Message(
-        id: 'welcome',
-        content: 'Hello! I\'m your AI therapist. I\'m here to provide a safe space for you to express yourself. How are you feeling today?',
+        content: 'Hello! I\'m your AI chat bot. I\'m here to provide a safe space for you to express yourself. What would you like to chat about today?',
         isUser: false,
         timestamp: DateTime.now(),
       ));
@@ -65,7 +48,6 @@ class ChatProvider with ChangeNotifier {
       
       // Add user message to the list
       final userMessage = Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
         content: content,
         isUser: true,
         timestamp: DateTime.now(),
@@ -73,7 +55,6 @@ class ChatProvider with ChangeNotifier {
       _messages.add(userMessage);
       notifyListeners();
 
-      print('Sending message to: $_baseUrl/chat'); // Debug print
       final response = await http.post(
         Uri.parse('$_baseUrl/chat'),
         headers: {
@@ -90,13 +71,9 @@ class ChatProvider with ChangeNotifier {
         },
       );
 
-      print('Response status: ${response.statusCode}'); // Debug print
-      print('Response body: ${response.body}'); // Debug print
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final aiMessage = Message(
-          id: data['id'],
           content: data['response'],
           isUser: false,
           timestamp: DateTime.now(),
@@ -108,15 +85,12 @@ class ChatProvider with ChangeNotifier {
         throw Exception(errorMessage);
       }
     } on TimeoutException {
-      print('Chat error: Request timed out');
       _messages.add(Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
         content: 'Sorry, the request timed out. Please check your internet connection and try again.',
         isUser: false,
         timestamp: DateTime.now(),
       ));
     } catch (e) {
-      print('Chat error: $e'); // For debugging
       String errorMessage = 'Sorry, there was an error processing your message.';
       
       if (e.toString().contains('Not authenticated')) {
@@ -128,7 +102,6 @@ class ChatProvider with ChangeNotifier {
       }
       
       _messages.add(Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
         content: errorMessage,
         isUser: false,
         timestamp: DateTime.now(),
@@ -139,8 +112,26 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  void clearMessages() {
-    _messages.clear();
-    notifyListeners();
+  Future<void> clearConversation(BuildContext context) async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      // Clear conversation history on the server
+      await http.post(
+        Uri.parse('$_baseUrl/chat/clear'),
+        headers: {
+          'Authorization': 'Bearer ${authProvider.token}',
+        },
+      );
+
+      // Clear local messages
+      _messages.clear();
+      notifyListeners();
+    } catch (e) {
+      print('❌ Error clearing conversation: $e');
+    }
   }
 } 

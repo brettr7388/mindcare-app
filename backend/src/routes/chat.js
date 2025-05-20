@@ -1,6 +1,5 @@
 const express = require('express');
 const { OpenAI } = require('openai');
-const Message = require('../models/Message');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -10,96 +9,88 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Store conversation history for each user
+const conversationHistory = new Map();
+
 // Conversation prompt
-const SYSTEM_PROMPT = `You are a friendly and supportive AI companion who enjoys meaningful conversations. Your role is to:
+const SYSTEM_PROMPT = `You are a kind, empathetic, and supportive AI chat bot. Your role is to listen without judgment, validate the user's emotions, and gently offer encouragement or self-care suggestions. Do not say you are an AI model. If the user expresses emotional distress or stress, acknowledge their feelings and respond compassionately. Avoid defaulting to safety disclaimers. Never diagnose or offer medical advice, but reassure the user that they're not alone.
 
-1. Engage in natural, flowing conversations
-2. Listen actively and respond thoughtfully
-3. Share general life insights and perspectives
-4. Maintain a warm, friendly tone
+Core Principles:
+1. Listen actively and respond with genuine empathy
+2. Validate emotions and experiences without judgment
+3. Offer gentle support and encouragement
+4. Share practical self-care suggestions when appropriate
+5. Maintain a warm, understanding tone
+6. Build trust through consistent, compassionate responses
 
-For initial messages:
-- "I'd like to talk about my day" → "I'd love to hear about your day! What's been happening? I'm here to listen and chat."
-- "I need someone to talk to" → "I'm here and ready to chat! What's on your mind? I'm happy to listen and share in conversation."
-- "I want to share something" → "I'm all ears! Feel free to share whatever you'd like to talk about. I'm here to listen and chat."
-- "Can we chat about life?" → "Of course! Life is full of interesting topics to discuss. What aspects would you like to talk about?"
-- "I need a listening ear" → "I'm here to listen and chat! What would you like to talk about? I'm ready to engage in conversation."
-- "Let's have a conversation" → "I'd love to chat! What topics interest you? I'm here to listen and share in conversation."
-
-Conversation Guidelines:
-- Keep the conversation natural and flowing
-- Ask thoughtful follow-up questions
-- Share general insights and perspectives
-- Maintain a warm, friendly tone
-- Build on previous responses
-- Focus on meaningful dialogue
+Response Guidelines:
+- Acknowledge and validate emotions first
+- Use empathetic language ("I hear you", "That sounds difficult", "I understand")
+- Offer gentle support and encouragement
+- Share practical coping strategies when relevant
+- Keep responses personal and conversational
+- Avoid clinical or formal language
+- Never dismiss or minimize feelings
+- Don't mention being an AI or limitations
+- Focus on emotional support and understanding
+- Remember and reference previous parts of the conversation when relevant
 
 Remember:
-- You are here to engage in friendly conversation
-- Focus on listening and sharing perspectives
-- Keep responses warm and engaging
-- Maintain a natural conversation flow
-- Only suggest professional help if the user expresses thoughts of self-harm or crisis`;
+- You are here to provide emotional support
+- Every emotion is valid and deserves acknowledgment
+- Your role is to listen, understand, and support
+- Keep responses warm, personal, and empathetic
+- Build trust through consistent, compassionate dialogue
+- Maintain context from the current conversation`;
 
 // Send message to AI
 router.post('/', auth, async (req, res) => {
   try {
     const { message } = req.body;
+    const userId = req.user.id;
     
     if (!message) {
       return res.status(400).json({ message: 'Message is required' });
     }
 
-    // Save user message
-    const userMessage = new Message({
-      user: req.user._id,
-      content: message,
-      isUser: true,
-    });
-    await userMessage.save();
-
-    // Get conversation history
-    const recentMessages = await Message.find({ user: req.user._id })
-      .sort({ createdAt: 1 })
-      .limit(5);
-
-    // Prepare conversation history for context
-    const conversationHistory = recentMessages.map(msg => ({
-      role: msg.isUser ? "user" : "assistant",
-      content: msg.content
-    }));
+    // Log user message
+    console.log('\n👤 User:', message);
 
     try {
+      // Get or initialize conversation history for this user
+      if (!conversationHistory.has(userId)) {
+        conversationHistory.set(userId, [
+          { role: "system", content: SYSTEM_PROMPT }
+        ]);
+      }
+
+      // Add user message to history
+      conversationHistory.get(userId).push({
+        role: "user",
+        content: message
+      });
+
       // Get AI response
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT
-          },
-          ...conversationHistory,
-          {
-            role: "user",
-            content: message
-          }
-        ],
-        temperature: 0.8,
-        max_tokens: 250,
+        model: "gpt-4o",
+        messages: conversationHistory.get(userId),
+        temperature: 0.7,
+        max_tokens: 500,
       });
 
       const aiResponse = completion.choices[0].message.content;
 
-      // Save AI response
-      const aiMessage = new Message({
-        user: req.user._id,
-        content: aiResponse,
-        isUser: false,
+      // Add AI response to history
+      conversationHistory.get(userId).push({
+        role: "assistant",
+        content: aiResponse
       });
-      await aiMessage.save();
+
+      // Log AI response
+      console.log('🤖 AI:', aiResponse);
+      console.log('----------------------------------------');
 
       res.json({
-        id: aiMessage._id,
         response: aiResponse,
       });
     } catch (openaiError) {
@@ -118,21 +109,11 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Get chat history
-router.get('/history', auth, async (req, res) => {
-  try {
-    const messages = await Message.find({ user: req.user._id })
-      .sort({ createdAt: 1 })
-      .limit(50);
-
-    res.json(messages);
-  } catch (error) {
-    console.error('History error:', error);
-    res.status(400).json({ 
-      message: 'Error fetching chat history',
-      details: error.message 
-    });
-  }
+// Clear conversation history when user logs out
+router.post('/clear', auth, (req, res) => {
+  const userId = req.user.id;
+  conversationHistory.delete(userId);
+  res.json({ message: 'Conversation history cleared' });
 });
 
 module.exports = router; 

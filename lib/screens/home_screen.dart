@@ -21,8 +21,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  double _moodValue = 3.0;
-  bool _hasCheckedIn = false;
 
   final List<Widget> _screens = [
     const _DashboardTab(),
@@ -31,65 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
     const ResourcesScreen(),
     const ProfileScreen(),
   ];
-
-  void _updateMoodValue(double value) {
-    setState(() {
-      _moodValue = value;
-    });
-  }
-
-  Future<void> _submitMood() async {
-    try {
-      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
-      await moodProvider.addMood(_moodValue.round(), '');
-      
-      if (mounted) {
-        setState(() {
-          _hasCheckedIn = true;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Mood saved for today!',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error: ${e.toString()}',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,161 +97,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _DashboardTab extends StatefulWidget {
+class _DashboardTab extends StatelessWidget {
   const _DashboardTab();
-
-  @override
-  State<_DashboardTab> createState() => _DashboardTabState();
-}
-
-class _DashboardTabState extends State<_DashboardTab> {
-  double _moodValue = 3.0;
-  bool _isSubmitting = false;
-  List<Map<String, dynamic>> _dailyTips = [];
-  int _currentTipIndex = 0;
-
-  final List<Map<String, dynamic>> _allTips = [
-    {
-      'title': 'Practice Mindfulness',
-      'description': 'Take a few minutes each day to focus on your breath and be present in the moment.',
-      'icon': Icons.self_improvement,
-    },
-    {
-      'title': 'Stay Hydrated',
-      'description': 'Drinking enough water can help improve your mood and energy levels.',
-      'icon': Icons.water_drop,
-    },
-    {
-      'title': 'Get Moving',
-      'description': 'Even a short walk can boost your mood and reduce stress.',
-      'icon': Icons.directions_walk,
-    },
-    {
-      'title': 'Connect with Others',
-      'description': 'Reach out to friends or family for a meaningful conversation.',
-      'icon': Icons.people,
-    },
-    {
-      'title': 'Practice Gratitude',
-      'description': 'Write down three things you\'re grateful for each day.',
-      'icon': Icons.favorite,
-    },
-    {
-      'title': 'Limit Screen Time',
-      'description': 'Take regular breaks from digital devices to reduce eye strain and stress.',
-      'icon': Icons.phone_android,
-    },
-    {
-      'title': 'Get Enough Sleep',
-      'description': 'Aim for 7-9 hours of quality sleep each night.',
-      'icon': Icons.bedtime,
-    },
-    {
-      'title': 'Eat Mindfully',
-      'description': 'Pay attention to what and how you eat, savoring each bite.',
-      'icon': Icons.restaurant,
-    },
-    {
-      'title': 'Learn Something New',
-      'description': 'Challenge your mind with a new skill or hobby.',
-      'icon': Icons.school,
-    },
-    {
-      'title': 'Express Yourself',
-      'description': 'Write, draw, or create something to express your feelings.',
-      'icon': Icons.brush,
-    },
-    {
-      'title': 'Practice Deep Breathing',
-      'description': 'Take deep breaths to calm your mind and reduce anxiety.',
-      'icon': Icons.air,
-    },
-    {
-      'title': 'Stay Organized',
-      'description': 'A clean and organized space can help clear your mind.',
-      'icon': Icons.cleaning_services,
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshTips();
-  }
-
-  void _refreshTips() {
-    setState(() {
-      _dailyTips = List.from(_allTips)..shuffle();
-      _currentTipIndex = 0;
-    });
-  }
-
-  void _updateMoodValue(double value) {
-    setState(() {
-      _moodValue = value;
-    });
-  }
-
-  Future<void> _submitMood() async {
-    if (_isSubmitting) return;
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
-      await moodProvider.addMood(_moodValue.round(), '');
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Mood saved for today!',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error: ${e.toString()}',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -335,9 +121,8 @@ class _DashboardTabState extends State<_DashboardTab> {
             ),
             Consumer<MoodProvider>(
               builder: (context, moodProvider, child) {
-                final todayMood = moodProvider.moods.isNotEmpty
-                    ? moodProvider.moods.first
-                    : null;
+                final hasMoodForToday = moodProvider.hasMoodForToday;
+                final todayMood = moodProvider.todayMood;
 
                 return Container(
                   decoration: BoxDecoration(
@@ -352,22 +137,52 @@ class _DashboardTabState extends State<_DashboardTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Today\'s Mood',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Today\'s Mood',
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.history,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MoodHistoryScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
-                      if (todayMood != null) ...[
+                      if (!hasMoodForToday) ...[
+                        Text(
+                          'How are you feeling today?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const MoodInputSection(),
+                      ] else if (todayMood != null) ...[
                         Row(
                           children: [
                             Icon(
                               _getMoodIcon(todayMood.rating),
                               size: 48,
-                              color: Colors.white,
+                              color: _getMoodColor(todayMood.rating),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -385,62 +200,7 @@ class _DashboardTabState extends State<_DashboardTab> {
                                 ],
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.history,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const MoodHistoryScreen(),
-                                  ),
-                                );
-                              },
-                            ),
                           ],
-                        ),
-                      ] else ...[
-                        Text(
-                          'How are you feeling today?',
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        MoodSlider(
-                          value: _moodValue,
-                          onChanged: _updateMoodValue,
-                        ),
-                        const SizedBox(height: 24),
-                        Center(
-                          child: SizedBox(
-                            width: 200,
-                            child: ElevatedButton(
-                              onPressed: _isSubmitting ? null : _submitMood,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.blue.shade900,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: _isSubmitting
-                                  ? const CircularProgressIndicator()
-                                  : Text(
-                                      'Save Mood',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                            ),
-                          ),
                         ),
                       ],
                     ],
@@ -477,24 +237,24 @@ class _DashboardTabState extends State<_DashboardTab> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.refresh, color: Colors.white),
-                        onPressed: _refreshTips,
+                        onPressed: () {
+                          // TODO: Implement refresh tips
+                        },
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  if (_dailyTips.isNotEmpty) ...[
-                    _DailyTipCard(
-                      title: _dailyTips[0]['title'] as String,
-                      description: _dailyTips[0]['description'] as String,
-                      icon: _dailyTips[0]['icon'] as IconData,
-                    ),
-                    const SizedBox(height: 16),
-                    _DailyTipCard(
-                      title: _dailyTips[1]['title'] as String,
-                      description: _dailyTips[1]['description'] as String,
-                      icon: _dailyTips[1]['icon'] as IconData,
-                    ),
-                  ],
+                  _DailyTipCard(
+                    title: 'Practice Mindfulness',
+                    description: 'Take a few minutes each day to focus on your breath and be present in the moment.',
+                    icon: Icons.self_improvement,
+                  ),
+                  const SizedBox(height: 16),
+                  _DailyTipCard(
+                    title: 'Stay Hydrated',
+                    description: 'Drinking enough water can help improve your mood and energy levels.',
+                    icon: Icons.water_drop,
+                  ),
                 ],
               ),
             ),
@@ -521,20 +281,175 @@ class _DashboardTabState extends State<_DashboardTab> {
     }
   }
 
+  Color _getMoodColor(int rating) {
+    switch (rating) {
+      case 1:
+        return Colors.red;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.yellow;
+      case 4:
+        return Colors.lightGreen;
+      case 5:
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
   String _getMoodText(int rating) {
     switch (rating) {
       case 1:
-        return 'Very Bad';
+        return 'Very Sad';
       case 2:
-        return 'Bad';
+        return 'Sad';
       case 3:
         return 'Neutral';
       case 4:
-        return 'Good';
+        return 'Happy';
       case 5:
-        return 'Very Good';
+        return 'Very Happy';
       default:
-        return 'Unknown';
+        return 'Neutral';
+    }
+  }
+}
+
+class MoodInputSection extends StatefulWidget {
+  const MoodInputSection({super.key});
+
+  @override
+  State<MoodInputSection> createState() => _MoodInputSectionState();
+}
+
+class _MoodInputSectionState extends State<MoodInputSection> {
+  double _moodValue = 3.0;
+  bool _isSubmitting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: Colors.white,
+            inactiveTrackColor: Colors.white.withOpacity(0.3),
+            thumbColor: Colors.white,
+            overlayColor: Colors.white.withOpacity(0.2),
+            valueIndicatorColor: Colors.white,
+            valueIndicatorTextStyle: GoogleFonts.poppins(
+              color: Colors.blue.shade900,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          child: Slider(
+            value: _moodValue,
+            min: 1,
+            max: 5,
+            divisions: 4,
+            label: _getMoodText(_moodValue.round()),
+            onChanged: (value) {
+              setState(() {
+                _moodValue = value;
+              });
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(Icons.sentiment_very_dissatisfied, size: 32, color: Colors.red),
+              Icon(Icons.sentiment_dissatisfied, size: 32, color: Colors.orange),
+              Icon(Icons.sentiment_neutral, size: 32, color: Colors.yellow),
+              Icon(Icons.sentiment_satisfied, size: 32, color: Colors.lightGreen),
+              Icon(Icons.sentiment_very_satisfied, size: 32, color: Colors.green),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: 200,
+          child: ElevatedButton(
+            onPressed: _isSubmitting ? null : _submitMood,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.blue.shade900,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: _isSubmitting
+                ? const CircularProgressIndicator()
+                : Text(
+                    'Save Mood',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _submitMood() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+      await moodProvider.addMood(_moodValue.round());
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Mood saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving mood: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  String _getMoodText(int rating) {
+    switch (rating) {
+      case 1:
+        return 'Very Sad';
+      case 2:
+        return 'Sad';
+      case 3:
+        return 'Neutral';
+      case 4:
+        return 'Happy';
+      case 5:
+        return 'Very Happy';
+      default:
+        return 'Neutral';
     }
   }
 }
@@ -686,4 +601,97 @@ Widget _buildMotivationalBoard(BuildContext context) {
       ),
     ),
   );
+}
+
+class MoodSlider extends StatefulWidget {
+  const MoodSlider({super.key});
+
+  @override
+  State<MoodSlider> createState() => _MoodSliderState();
+}
+
+class _MoodSliderState extends State<MoodSlider> {
+  double _value = 3.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Slider(
+          value: _value,
+          min: 1,
+          max: 5,
+          divisions: 4,
+          label: _getMoodText(_value.round()),
+          onChanged: (value) {
+            setState(() {
+              _value = value;
+            });
+          },
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('😢', style: TextStyle(fontSize: 24)),
+            Text('😐', style: TextStyle(fontSize: 24)),
+            Text('😊', style: TextStyle(fontSize: 24)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _getMoodText(int rating) {
+    switch (rating) {
+      case 1:
+        return 'Very Sad';
+      case 2:
+        return 'Sad';
+      case 3:
+        return 'Neutral';
+      case 4:
+        return 'Happy';
+      case 5:
+        return 'Very Happy';
+      default:
+        return 'Neutral';
+    }
+  }
+}
+
+class SaveMoodButton extends StatelessWidget {
+  const SaveMoodButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer2<MoodProvider, _MoodSliderState>(
+      builder: (context, moodProvider, sliderState, child) {
+        return ElevatedButton(
+          onPressed: () async {
+            try {
+              await moodProvider.addMood(sliderState._value.round());
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Mood saved successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error saving mood: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+          child: const Text('Save Mood'),
+        );
+      },
+    );
+  }
 } 

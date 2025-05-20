@@ -13,10 +13,10 @@ const moodSchema = new mongoose.Schema(
       min: 1,
       max: 5,
     },
-    note: {
-      type: String,
-      trim: true,
-    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    }
   },
   {
     timestamps: true,

@@ -1,110 +1,150 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/mood.dart';
-import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import '../main.dart';
 
 class MoodProvider with ChangeNotifier {
+  final String _baseUrl = 'http://192.168.86.212:3000/api';
   List<Mood> _moods = [];
+  Mood? _todayMood;
+  bool _isLoading = false;
+
   List<Mood> get moods => _moods;
-
-  Future<void> addMood(int rating, String note) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://192.168.86.212:3000/api/moods'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${await _getToken()}',
-        },
-        body: json.encode({
-          'rating': rating,
-          'note': note,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        final newMood = Mood(
-          id: data['_id'],
-          rating: rating,
-          note: note,
-          timestamp: DateTime.parse(data['createdAt']),
-        );
-        _moods.insert(0, newMood);
-        notifyListeners();
-      } else {
-        throw Exception('Failed to add mood: ${response.body}');
-      }
-    } catch (e) {
-      print('Error adding mood: $e');
-      throw Exception('Failed to add mood: $e');
-    }
-  }
+  Mood? get todayMood => _todayMood;
+  bool get isLoading => _isLoading;
+  bool get hasMoodForToday => _todayMood != null;
 
   Future<void> fetchMoods() async {
     try {
+      _isLoading = true;
+      notifyListeners();
+
+      final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+      if (authProvider.token == null) {
+        throw Exception('Not authenticated');
+      }
+
       final response = await http.get(
-        Uri.parse('http://192.168.86.212:3000/api/moods'),
+        Uri.parse('$_baseUrl/moods'),
         headers: {
-          'Authorization': 'Bearer ${await _getToken()}',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authProvider.token}',
         },
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         _moods = data.map((json) => Mood.fromJson(json)).toList();
+        
+        // Update today's mood
+        _todayMood = _moods.where((mood) => _isToday(mood.timestamp)).firstOrNull;
+        print('Today\'s mood: $_todayMood'); // Debug log
         notifyListeners();
       } else {
-        throw Exception('Failed to fetch moods: ${response.body}');
+        throw Exception('Failed to fetch moods');
       }
     } catch (e) {
-      print('Error fetching moods: $e');
-      throw Exception('Failed to fetch moods: $e');
+      print('Error fetching moods: $e'); // Debug log
+      throw Exception('Error fetching moods: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  Future<String> _getToken() async {
-    // Get the token from your auth provider
-    final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
-    return authProvider.token ?? '';
-  }
-
-  Future<void> updateMood(String id, int rating, String note) async {
+  Future<void> addMood(int rating) async {
     try {
-      final response = await http.put(
-        Uri.parse('http://192.168.86.212:3000/api/moods/$id'),
+      _isLoading = true;
+      notifyListeners();
+
+      final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+      if (authProvider.token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/moods'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${await _getToken()}',
+          'Authorization': 'Bearer ${authProvider.token}',
         },
         body: json.encode({
           'rating': rating,
-          'note': note,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        final newMood = Mood.fromJson(data);
+        _moods.insert(0, newMood); // Insert at the beginning to maintain chronological order
+        _todayMood = newMood;
+        notifyListeners();
+      } else if (response.statusCode == 400) {
+        final data = json.decode(response.body);
+        throw Exception(data['message'] ?? 'Failed to add mood');
+      } else {
+        throw Exception('Failed to add mood');
+      }
+    } catch (e) {
+      throw Exception('Error adding mood: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateMood(String id, int rating) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+      if (authProvider.token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.put(
+        Uri.parse('$_baseUrl/moods/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authProvider.token}',
+        },
+        body: json.encode({
+          'rating': rating,
         }),
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final updatedMood = Mood(
-          id: data['_id'],
-          rating: rating,
-          note: note,
-          timestamp: DateTime.parse(data['createdAt']),
-        );
-        
-        final index = _moods.indexWhere((mood) => mood.id == id);
+        final updatedMood = Mood.fromJson(json.decode(response.body));
+        final index = _moods.indexWhere((m) => m.id == id);
         if (index != -1) {
           _moods[index] = updatedMood;
+          if (_todayMood?.id == id) {
+            _todayMood = updatedMood;
+          }
           notifyListeners();
         }
       } else {
-        throw Exception('Failed to update mood: ${response.body}');
+        throw Exception('Failed to update mood');
       }
     } catch (e) {
-      print('Error updating mood: $e');
-      throw Exception('Failed to update mood: $e');
+      throw Exception('Error updating mood: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now().toUtc();
+    final today = DateTime(now.year, now.month, now.day);
+    final moodDate = date.toUtc();
+    final moodDay = DateTime(moodDate.year, moodDate.month, moodDate.day);
+    
+    print('Comparing dates: $today and $moodDay'); // Debug log
+    return today.isAtSameMomentAs(moodDay);
   }
 } 
