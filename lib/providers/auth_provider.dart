@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -7,7 +8,7 @@ import '../providers/mood_provider.dart';
 import '../main.dart';
 
 class AuthProvider with ChangeNotifier {
-  final String _baseUrl = 'http://192.168.86.212:3000/api';
+  final String _baseUrl = 'http://10.132.188.218:3000/api';
   final _storage = const FlutterSecureStorage();
   bool _isAuthenticated = false;
   String? _token;
@@ -35,6 +36,11 @@ class AuthProvider with ChangeNotifier {
           'email': email,
           'password': password,
         }),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Connection timed out. Please check your internet connection and try again.');
+        },
       );
 
       if (response.statusCode == 200) {
@@ -43,6 +49,7 @@ class AuthProvider with ChangeNotifier {
         _userId = data['userId'];
         _userName = data['name'];
         _userEmail = data['email'];
+        _isAuthenticated = true;
 
         // Store user data in secure storage
         await _storage.write(key: 'token', value: _token);
@@ -59,10 +66,15 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
       } else {
         final data = json.decode(response.body);
-        throw Exception(data['message'] ?? 'Login failed');
+        throw Exception(data['message'] ?? 'Login failed. Please check your credentials and try again.');
       }
+    } on TimeoutException {
+      throw Exception('Connection timed out. Please check your internet connection and try again.');
     } catch (e) {
-      throw Exception('Error during login: $e');
+      if (e.toString().contains('Failed host lookup')) {
+        throw Exception('Could not connect to the server. Please check your internet connection and try again.');
+      }
+      throw Exception('Error during login: ${e.toString()}');
     } finally {
       _isLoading = false;
       notifyListeners();

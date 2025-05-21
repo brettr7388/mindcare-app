@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../main.dart';
 
 class MoodProvider with ChangeNotifier {
-  final String _baseUrl = 'http://192.168.86.212:3000/api';
+  final String _baseUrl = 'http://10.132.188.218:3000/api';
   List<Mood> _moods = [];
   Mood? _todayMood;
   bool _isLoading = false;

@@ -11,6 +11,7 @@ import 'auth_screen.dart';
 import 'discussion_board_screen.dart';
 import 'mood_history_screen.dart';
 import '../widgets/mood_slider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  int _currentTipIndex = 0;
 
   final List<Widget> _screens = [
     const _DashboardTab(),
@@ -30,9 +32,39 @@ class _HomeScreenState extends State<HomeScreen> {
     const ProfileScreen(),
   ];
 
+  final List<_DailyTip> _dailyTips = [
+    _DailyTip(
+      title: 'Practice Mindfulness',
+      description: 'Take a few minutes each day to focus on your breath and be present in the moment.',
+      icon: Icons.self_improvement,
+      url: 'https://www.youtube.com/watch?v=inpok4MKVLM',
+    ),
+    _DailyTip(
+      title: 'Stay Hydrated',
+      description: 'Drinking enough water can help improve your mood and energy levels.',
+      icon: Icons.water_drop,
+    ),
+    _DailyTip(
+      title: 'Take a Walk',
+      description: 'A short walk outside can help clear your mind and boost your mood.',
+      icon: Icons.directions_walk,
+    ),
+    _DailyTip(
+      title: 'Practice Gratitude',
+      description: 'Write down three things you\'re grateful for each day.',
+      icon: Icons.favorite,
+    ),
+    _DailyTip(
+      title: 'Get Enough Sleep',
+      description: 'Aim for 7-9 hours of quality sleep each night.',
+      icon: Icons.nightlight_round,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -48,57 +80,180 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
+          color: Colors.white.withOpacity(0.2),
           border: Border(
             top: BorderSide(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withOpacity(0.2),
               width: 1,
             ),
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white.withOpacity(0.6),
-          selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          unselectedLabelStyle: GoogleFonts.poppins(),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat),
-              label: 'Chat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.spa),
-              label: 'Wellness',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.book),
-              label: 'Resources',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 0,
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white.withOpacity(0.6),
+            selectedLabelStyle: GoogleFonts.quicksand(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+            unselectedLabelStyle: GoogleFonts.quicksand(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard_rounded),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat_bubble_rounded),
+                label: 'Chat',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.spa_rounded),
+                label: 'Wellness',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.menu_book_rounded),
+                label: 'Resources',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_rounded),
+                label: 'Profile',
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  void _showTipDetails(_DailyTip tip) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.blue.shade900,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(tip.icon, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                tip.title,
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              tip.description,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.9),
+              ),
+            ),
+            if (tip.url != null) ...[
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => _launchURL(tip.url!),
+                icon: const Icon(Icons.play_circle_outline),
+                label: const Text('Watch Video'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.blue.shade900,
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
 }
 
-class _DashboardTab extends StatelessWidget {
+class _DashboardTab extends StatefulWidget {
   const _DashboardTab();
+
+  @override
+  State<_DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<_DashboardTab> {
+  int _currentTipIndex = 0;
+  final List<_DailyTip> _dailyTips = [
+    _DailyTip(
+      title: 'Practice Mindfulness',
+      description: 'Take a few minutes each day to focus on your breath and be present in the moment.',
+      icon: Icons.self_improvement,
+      url: 'https://www.youtube.com/watch?v=inpok4MKVLM',
+    ),
+    _DailyTip(
+      title: 'Stay Hydrated',
+      description: 'Drinking enough water can help improve your mood and energy levels.',
+      icon: Icons.water_drop,
+    ),
+    _DailyTip(
+      title: 'Take a Walk',
+      description: 'A short walk outside can help clear your mind and boost your mood.',
+      icon: Icons.directions_walk,
+    ),
+    _DailyTip(
+      title: 'Practice Gratitude',
+      description: 'Write down three things you\'re grateful for each day.',
+      icon: Icons.favorite,
+    ),
+    _DailyTip(
+      title: 'Get Enough Sleep',
+      description: 'Aim for 7-9 hours of quality sleep each night.',
+      icon: Icons.nightlight_round,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -112,10 +267,11 @@ class _DashboardTab extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 'Welcome to MindCare',
-                style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.quicksand(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -126,12 +282,19 @@ class _DashboardTab extends StatelessWidget {
 
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.2),
                       width: 1,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        spreadRadius: 0,
+                      ),
+                    ],
                   ),
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -142,15 +305,16 @@ class _DashboardTab extends StatelessWidget {
                         children: [
                           Text(
                             'Today\'s Mood',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.quicksand(
                               fontSize: 24,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
+                              letterSpacing: 0.5,
                             ),
                           ),
                           IconButton(
                             icon: const Icon(
-                              Icons.history,
+                              Icons.history_rounded,
                               color: Colors.white,
                             ),
                             onPressed: () {
@@ -168,10 +332,11 @@ class _DashboardTab extends StatelessWidget {
                       if (!hasMoodForToday) ...[
                         Text(
                           'How are you feeling today?',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.quicksand(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
+                            letterSpacing: 0.5,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -191,10 +356,11 @@ class _DashboardTab extends StatelessWidget {
                                 children: [
                                   Text(
                                     _getMoodText(todayMood.rating),
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.quicksand(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ],
@@ -213,12 +379,19 @@ class _DashboardTab extends StatelessWidget {
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.2),
                   width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                  ),
+                ],
               ),
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -229,31 +402,134 @@ class _DashboardTab extends StatelessWidget {
                     children: [
                       Text(
                         'Daily Tips',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.quicksand(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        icon: const Icon(Icons.refresh_rounded, color: Colors.white),
                         onPressed: () {
-                          // TODO: Implement refresh tips
+                          setState(() {
+                            _currentTipIndex = (_currentTipIndex + 2) % _dailyTips.length;
+                          });
                         },
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   _DailyTipCard(
-                    title: 'Practice Mindfulness',
-                    description: 'Take a few minutes each day to focus on your breath and be present in the moment.',
-                    icon: Icons.self_improvement,
+                    title: _dailyTips[_currentTipIndex].title,
+                    description: _dailyTips[_currentTipIndex].description,
+                    icon: _dailyTips[_currentTipIndex].icon,
                   ),
                   const SizedBox(height: 16),
                   _DailyTipCard(
-                    title: 'Stay Hydrated',
-                    description: 'Drinking enough water can help improve your mood and energy levels.',
-                    icon: Icons.water_drop,
+                    title: _dailyTips[(_currentTipIndex + 1) % _dailyTips.length].title,
+                    description: _dailyTips[(_currentTipIndex + 1) % _dailyTips.length].description,
+                    icon: _dailyTips[(_currentTipIndex + 1) % _dailyTips.length].icon,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Social Wellness Calendar',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '📅',
+                        style: TextStyle(fontSize: 22),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Consumer<MoodProvider>(
+                    builder: (context, moodProvider, child) {
+                      final todayMood = moodProvider.todayMood;
+                      final moodColor = todayMood != null 
+                          ? _getMoodColor(todayMood.rating)
+                          : Colors.white;
+                      
+                      return Text(
+                        'May 2025',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: moodColor,
+                          letterSpacing: 0.5,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      childAspectRatio: 1.0,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: 31,
+                    itemBuilder: (context, index) {
+                      final day = index + 1;
+                      final category = _getActivityCategory(day);
+                      return GestureDetector(
+                        onTap: () => _showActivityDialog(context, day),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _getCategoryColor(category).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _getCategoryColor(category).withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              day.toString(),
+                              style: GoogleFonts.quicksand(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: _getCategoryColor(category),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -313,6 +589,204 @@ class _DashboardTab extends StatelessWidget {
       default:
         return 'Neutral';
     }
+  }
+
+  String _getActivityCategory(int day) {
+    final categories = [
+      'mindfulness', // Day 1
+      'social',      // Day 2
+      'self-care',   // Day 3
+      'learning',    // Day 4
+      'social',      // Day 5
+      'mindfulness', // Day 6
+      'self-care',   // Day 7
+      'learning',    // Day 8
+      'social',      // Day 9
+      'mindfulness', // Day 10
+      'self-care',   // Day 11
+      'learning',    // Day 12
+      'social',      // Day 13
+      'mindfulness', // Day 14
+      'self-care',   // Day 15
+      'learning',    // Day 16
+      'social',      // Day 17
+      'mindfulness', // Day 18
+      'self-care',   // Day 19
+      'learning',    // Day 20
+      'social',      // Day 21
+      'mindfulness', // Day 22
+      'self-care',   // Day 23
+      'learning',    // Day 24
+      'social',      // Day 25
+      'mindfulness', // Day 26
+      'self-care',   // Day 27
+      'learning',    // Day 28
+      'social',      // Day 29
+      'mindfulness', // Day 30
+      'self-care',   // Day 31
+    ];
+    return categories[day - 1];
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'mindfulness':
+        return Colors.red.shade400;
+      case 'social':
+        return Colors.orange;
+      case 'self-care':
+        return Colors.yellow;
+      case 'learning':
+        return Colors.lightGreen;
+      default:
+        return Colors.green;
+    }
+  }
+
+  String _getActivityEmoji(int day) {
+    final emojis = [
+      '🧘', // Practice 5-minute meditation
+      '👋', // Wave to a classmate
+      '🛁', // Take a relaxing bath
+      '📚', // Read a chapter of a book
+      '💬', // Ask about someone's day
+      '🌿', // Water your plants
+      '🎵', // Listen to calming music
+      '📝', // Take notes on a new topic
+      '👥', // Join a study group
+      '🫖', // Make a cup of tea
+      '🛏️', // Make your bed
+      '🎯', // Set a new goal
+      '🍽️', // Eat lunch with someone
+      '🌅', // Watch the sunrise
+      '🧹', // Organize your space
+      '📖', // Learn a new word
+      '💭', // Share your thoughts
+      '🎨', // Color or draw
+      '🛋️', // Take a power nap
+      '🎓', // Watch an educational video
+      '👋', // Greet someone new
+      '🌙', // Stargaze for 5 minutes
+      '🧘', // Do some stretches
+      '📱', // Learn a new app feature
+      '💬', // Start a conversation
+      '🪴', // Care for a plant
+      '🛀', // Take a long shower
+      '📚', // Read an article
+      '👥', // Join a discussion
+      '🌿', // Open your window
+      '🎵', // Create a playlist
+    ];
+    return emojis[day - 1];
+  }
+
+  String _getSocialActivity(int day) {
+    final activities = [
+      'Practice 5-minute meditation',
+      'Wave to a classmate you recognize',
+      'Take a relaxing bath or shower',
+      'Read a chapter of an interesting book',
+      'Ask someone about their day',
+      'Water your plants and check their growth',
+      'Listen to calming music for 10 minutes',
+      'Take notes on a topic you want to learn',
+      'Join a study group for your current class',
+      'Make a cup of tea and enjoy it mindfully',
+      'Make your bed and organize your space',
+      'Set a new goal for the week',
+      'Eat lunch with someone from your class',
+      'Watch the sunrise or sunset',
+      'Organize your study space',
+      'Learn a new word and use it today',
+      'Share your thoughts in class discussion',
+      'Color or draw for 10 minutes',
+      'Take a 20-minute power nap',
+      'Watch an educational video on a topic you enjoy',
+      'Greet someone new in your class',
+      'Stargaze for 5 minutes before bed',
+      'Do some gentle stretches',
+      'Learn a new feature of an app you use',
+      'Start a conversation about a shared interest',
+      'Care for a plant or start growing one',
+      'Take a long, relaxing shower',
+      'Read an article about something interesting',
+      'Join a discussion in your class',
+      'Open your window and breathe fresh air',
+      'Create a calming playlist for studying',
+    ];
+    return activities[day - 1];
+  }
+
+  void _showActivityDialog(BuildContext context, int day) {
+    final category = _getActivityCategory(day);
+    final categoryColor = _getCategoryColor(category);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: categoryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Text(
+                _getActivityEmoji(day),
+                style: const TextStyle(fontSize: 32),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Day $day',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: categoryColor,
+                      ),
+                    ),
+                    Text(
+                      category.toUpperCase(),
+                      style: GoogleFonts.quicksand(
+                        fontSize: 14,
+                        color: categoryColor.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Text(
+          _getSocialActivity(day),
+          style: GoogleFonts.quicksand(
+            fontSize: 16,
+            color: Colors.black87,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: GoogleFonts.quicksand(
+                color: categoryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -471,7 +945,7 @@ class _DailyTipCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withOpacity(0.2),
           width: 1,
@@ -482,7 +956,7 @@ class _DailyTipCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: Colors.white),
@@ -494,18 +968,20 @@ class _DailyTipCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.quicksand(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.quicksand(
                     fontSize: 14,
                     color: Colors.white.withOpacity(0.8),
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
@@ -694,4 +1170,18 @@ class SaveMoodButton extends StatelessWidget {
       },
     );
   }
+}
+
+class _DailyTip {
+  final String title;
+  final String description;
+  final IconData icon;
+  final String? url;
+
+  const _DailyTip({
+    required this.title,
+    required this.description,
+    required this.icon,
+    this.url,
+  });
 } 

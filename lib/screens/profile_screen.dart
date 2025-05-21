@@ -44,7 +44,11 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       const _ProfileHeader(),
                       const SizedBox(height: 24),
+                      const _WellnessStatsSection(),
+                      const SizedBox(height: 24),
                       const _SettingsSection(),
+                      const SizedBox(height: 24),
+                      const _AchievementsSection(),
                       const SizedBox(height: 24),
                       Container(
                         decoration: BoxDecoration(
@@ -61,10 +65,11 @@ class ProfileScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Account',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.quicksand(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
+                                letterSpacing: 0.5,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -89,7 +94,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               title: Text(
                                 'Logout',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.quicksand(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white,
@@ -157,6 +162,134 @@ class _ProfileHeader extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 16,
               color: Colors.white.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WellnessStatsSection extends StatelessWidget {
+  const _WellnessStatsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Wellness Stats',
+            style: GoogleFonts.quicksand(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.calendar_today,
+                  title: 'Streak',
+                  value: '7 days',
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.mood,
+                  title: 'Avg. Mood',
+                  value: 'Happy',
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.chat_bubble,
+                  title: 'Chats',
+                  value: '12',
+                  color: Colors.purple,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.self_improvement,
+                  title: 'Activities',
+                  value: '15',
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+
+  const _StatCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: GoogleFonts.quicksand(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.8),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.quicksand(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
         ],
@@ -274,6 +407,145 @@ class _SettingsTile extends StatelessWidget {
       onChanged: onChanged,
       activeColor: Colors.white,
       activeTrackColor: Colors.white.withOpacity(0.5),
+    );
+  }
+}
+
+class _AchievementsSection extends StatelessWidget {
+  const _AchievementsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Achievements',
+                style: GoogleFonts.quicksand(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  // Show all achievements
+                },
+                child: Text(
+                  'View All',
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _AchievementCard(
+                  icon: '🎯',
+                  title: 'First Step',
+                  description: 'Set your first mood',
+                  isUnlocked: true,
+                ),
+                const SizedBox(width: 16),
+                _AchievementCard(
+                  icon: '🔥',
+                  title: 'On Fire',
+                  description: '7-day streak',
+                  isUnlocked: true,
+                ),
+                const SizedBox(width: 16),
+                _AchievementCard(
+                  icon: '💭',
+                  title: 'Social Butterfly',
+                  description: 'Join 5 discussions',
+                  isUnlocked: false,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AchievementCard extends StatelessWidget {
+  final String icon;
+  final String title;
+  final String description;
+  final bool isUnlocked;
+
+  const _AchievementCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.isUnlocked,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isUnlocked 
+            ? Colors.white.withOpacity(0.1)
+            : Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isUnlocked 
+              ? Colors.white.withOpacity(0.2)
+              : Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            icon,
+            style: const TextStyle(fontSize: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: GoogleFonts.quicksand(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isUnlocked ? Colors.white : Colors.white.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            description,
+            style: GoogleFonts.quicksand(
+              fontSize: 12,
+              color: isUnlocked 
+                  ? Colors.white.withOpacity(0.8)
+                  : Colors.white.withOpacity(0.3),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
