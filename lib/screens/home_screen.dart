@@ -281,22 +281,15 @@ class _DashboardTabState extends State<_DashboardTab> {
                 final todayMood = moodProvider.todayMood;
 
                 return Container(
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(24),
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.2),
                       width: 1,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        spreadRadius: 0,
-                      ),
-                    ],
                   ),
-                  padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -329,7 +322,27 @@ class _DashboardTabState extends State<_DashboardTab> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      if (!hasMoodForToday) ...[
+                      if (hasMoodForToday) ...[
+                        Row(
+                          children: [
+                            Icon(
+                              _getMoodIcon(todayMood!.rating),
+                              size: 32,
+                              color: _getMoodColor(todayMood.rating),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              _getMoodText(todayMood.rating),
+                              style: GoogleFonts.quicksand(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
                         Text(
                           'How are you feeling today?',
                           style: GoogleFonts.quicksand(
@@ -341,33 +354,6 @@ class _DashboardTabState extends State<_DashboardTab> {
                         ),
                         const SizedBox(height: 24),
                         const MoodInputSection(),
-                      ] else if (todayMood != null) ...[
-                        Row(
-                          children: [
-                            Icon(
-                              _getMoodIcon(todayMood.rating),
-                              size: 48,
-                              color: _getMoodColor(todayMood.rating),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _getMoodText(todayMood.rating),
-                                    style: GoogleFonts.quicksand(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ],
                   ),

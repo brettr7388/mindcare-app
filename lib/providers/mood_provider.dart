@@ -40,8 +40,15 @@ class MoodProvider with ChangeNotifier {
         _moods = data.map((json) => Mood.fromJson(json)).toList();
         
         // Update today's mood
-        _todayMood = _moods.where((mood) => _isToday(mood.timestamp)).firstOrNull;
-        print('Today\'s mood: $_todayMood'); // Debug log
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        _todayMood = _moods.firstWhere(
+          (mood) {
+            final moodDate = DateTime(mood.timestamp.year, mood.timestamp.month, mood.timestamp.day);
+            return moodDate.isAtSameMomentAs(today);
+          },
+          orElse: () => null as Mood,
+        );
         notifyListeners();
       } else {
         throw Exception('Failed to fetch moods');

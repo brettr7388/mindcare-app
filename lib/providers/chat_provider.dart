@@ -20,7 +20,7 @@ class Message {
 class ChatProvider with ChangeNotifier {
   List<Message> _messages = [];
   bool _isLoading = false;
-  static const String _baseUrl = 'http://192.168.86.212:3000/api';
+  static const String _baseUrl = 'http://10.132.188.218:3000/api';
 
   List<Message> get messages => _messages;
   bool get isLoading => _isLoading;
