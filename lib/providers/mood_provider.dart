@@ -42,13 +42,16 @@ class MoodProvider with ChangeNotifier {
         // Update today's mood
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
-        _todayMood = _moods.firstWhere(
-          (mood) {
-            final moodDate = DateTime(mood.timestamp.year, mood.timestamp.month, mood.timestamp.day);
-            return moodDate.isAtSameMomentAs(today);
-          },
-          orElse: () => null as Mood,
-        );
+        try {
+          _todayMood = _moods.firstWhere(
+            (mood) {
+              final moodDate = DateTime(mood.timestamp.year, mood.timestamp.month, mood.timestamp.day);
+              return moodDate.isAtSameMomentAs(today);
+            },
+          );
+        } catch (e) {
+          _todayMood = null;
+        }
         notifyListeners();
       } else {
         throw Exception('Failed to fetch moods');
