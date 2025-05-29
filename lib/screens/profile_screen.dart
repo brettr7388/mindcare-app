@@ -31,8 +31,6 @@ class ProfileScreen extends StatelessWidget {
                 SizedBox(height: 16),
                 _StatsSection(),
                 SizedBox(height: 16),
-                _WellnessInsightsSection(),
-                SizedBox(height: 16),
                 _SettingsSection(),
               ],
             ),
@@ -465,89 +463,6 @@ class _StatsSection extends StatelessWidget {
   }
 }
 
-class _WellnessInsightsSection extends StatelessWidget {
-  const _WellnessInsightsSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Wellness Insights',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildInsightItem('Stress Level', 'Low'),
-          const SizedBox(height: 12),
-          _buildInsightItem('Mood Stability', 'High'),
-          const SizedBox(height: 12),
-          _buildInsightItem('Mental Health Awareness', 'Good'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInsightItem(String title, String value) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: Colors.white.withOpacity(0.8),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SettingsSection extends StatelessWidget {
   const _SettingsSection();
 
@@ -578,7 +493,7 @@ class _SettingsSection extends StatelessWidget {
           const SizedBox(height: 16),
           _buildSettingsItem(
             'Edit Profile',
-            'Name, avatar, pronouns',
+            'Update name and profile photo',
             Icons.person,
             onTap: () {
               Navigator.push(
@@ -586,24 +501,6 @@ class _SettingsSection extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const EditProfileScreen()),
               );
             },
-          ),
-          _buildSettingsItem(
-            'Reminders',
-            'Mood tracking, check-ins',
-            Icons.notifications,
-            onTap: () {},
-          ),
-          _buildSettingsItem(
-            'Download Data',
-            'Export mood logs (CSV)',
-            Icons.download,
-            onTap: () {},
-          ),
-          _buildSettingsItem(
-            'Privacy & Security',
-            'PIN, data privacy',
-            Icons.security,
-            onTap: () {},
           ),
           const Divider(color: Colors.white24),
           _buildSettingsItem(
