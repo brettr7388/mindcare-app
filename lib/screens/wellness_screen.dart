@@ -60,25 +60,25 @@ class WellnessScreen extends StatelessWidget {
                           ),
                           WellnessItem(
                             title: 'Body Scan Meditation',
-                            description: '10-minute full body relaxation and awareness',
+                            description: '30-minute full body relaxation and awareness',
                             icon: Icons.accessibility_new,
                             url: 'https://www.youtube.com/watch?v=15q-N-_kkrU',
                           ),
                           WellnessItem(
                             title: 'Mindfulness for Beginners',
-                            description: '8-minute introduction to mindful awareness',
+                            description: '10-minute introduction to mindful awareness',
                             icon: Icons.lightbulb_outline,
                             url: 'https://www.youtube.com/watch?v=ZToicYcHIOU',
                           ),
                           WellnessItem(
                             title: 'Sleep Meditation',
-                            description: '20-minute guided meditation for better sleep',
+                            description: '10-minute guided meditation for better sleep',
                             icon: Icons.bedtime,
                             url: 'https://www.youtube.com/watch?v=aEqlQvczMJQ',
                           ),
                           WellnessItem(
                             title: 'Morning Meditation',
-                            description: '7-minute energizing start to your day',
+                            description: '10-minute energizing start to your day',
                             icon: Icons.wb_sunny,
                             url: 'https://www.youtube.com/watch?v=O-6f5wQXSu8',
                           ),
@@ -104,31 +104,31 @@ class WellnessScreen extends StatelessWidget {
                             title: 'Ocean Waves',
                             description: 'Peaceful ocean sounds for relaxation',
                             icon: Icons.waves,
-                            url: 'https://www.youtube.com/watch?v=V1bFr2SWP1I',
+                            url: 'https://youtu.be/9ZhqskAop6E',
                           ),
                           WellnessItem(
                             title: 'Rain Sounds',
                             description: 'Gentle rainfall for focus and calm',
                             icon: Icons.grain,
-                            url: 'https://www.youtube.com/watch?v=mPZkdNFkNps',
+                            url: 'https://www.youtube.com/live/J3Or65owCFY?si=o-ld1UFGW9OuTY32',
                           ),
                           WellnessItem(
                             title: 'Forest Ambience',
                             description: 'Birds chirping and rustling leaves',
                             icon: Icons.park,
-                            url: 'https://www.youtube.com/watch?v=xNN7iTA57jM',
+                            url: 'https://youtu.be/xNN7iTA57jM?si=0xMLRdfVXe4yyvIR',
                           ),
                           WellnessItem(
                             title: 'Piano Instrumental',
                             description: 'Soft piano melodies for stress relief',
                             icon: Icons.piano,
-                            url: 'https://www.youtube.com/watch?v=lFcSrYw-ARY',
+                            url: 'https://youtu.be/3NycM9lYdRI?si=kPdy_uADkJoCO7jr',
                           ),
                           WellnessItem(
                             title: 'Tibetan Singing Bowls',
                             description: 'Ancient healing sounds for deep relaxation',
                             icon: Icons.circle_outlined,
-                            url: 'https://www.youtube.com/watch?v=gQz_6FaRMyg',
+                            url: 'https://www.youtube.com/watch?v=OW7TH2U4hps',
                           ),
                           WellnessItem(
                             title: 'White Noise',
@@ -299,8 +299,21 @@ class _WellnessItemCard extends StatelessWidget {
 
   Future<void> _launchURL(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+          webViewConfiguration: const WebViewConfiguration(
+            enableJavaScript: true,
+            enableDomStorage: true,
+          ),
+        );
+      } else {
+        throw Exception('Could not launch $url');
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
     }
   }
 }
