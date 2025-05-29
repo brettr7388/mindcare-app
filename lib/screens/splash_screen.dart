@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import 'auth_screen.dart';
 import 'home_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,83 +12,125 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-  int _currentPage = 0;
-  final PageController _pageController = PageController();
-  bool _isFirstTime = true;
-  bool _isLoading = true;
-
-  final List<Map<String, dynamic>> _onboardingData = [
-    {
-      'title': 'Welcome to MindCare',
-      'description': 'Your personal mental health companion',
-      'icon': Icons.health_and_safety,
-    },
-    {
-      'title': 'Track Your Mood',
-      'description': 'Record and monitor your daily emotional well-being',
-      'icon': Icons.mood,
-    },
-    {
-      'title': 'Chat with AI',
-      'description': 'Get support and guidance whenever you need it',
-      'icon': Icons.chat,
-    },
-  ];
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _logoController;
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
+  late AnimationController _textSlideController;
+  late Animation<double> _logoAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _textSlideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    
+    // Logo fade in animation
+    _logoController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
+    
+    // Text fade in animation (delayed)
+    _fadeController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+    
+    // Scale animation for logo
+    _scaleController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    );
+    
+    // Text slide animation
+    _textSlideController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
 
-    _animation = CurvedAnimation(
-      parent: _controller,
+    _logoAnimation = CurvedAnimation(
+      parent: _logoController,
       curve: Curves.easeInOut,
     );
-
-    _controller.forward();
-    _initializeApp();
-  }
-
-  Future<void> _initializeApp() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Force reset the first-time flag
-    await prefs.setBool('isFirstTime', true);
-    setState(() {
-      _isFirstTime = true;
-      _isLoading = false;
-    });
-  }
-
-  void _finishOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isFirstTime', false);
     
-    // Always go to auth screen after onboarding
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.logout(); // Force logout
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const AuthScreen()),
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
     );
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _textSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _textSlideController,
+      curve: Curves.elasticOut,
+    ));
+
+    _startAnimations();
+  }
+
+  void _startAnimations() async {
+    // Start logo animation
+    _logoController.forward();
+    
+    // Start scale animation immediately
+    _scaleController.forward();
+    
+    // Wait a bit then start text fade and slide
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (mounted) {
+      _fadeController.forward();
+      _textSlideController.forward();
+    }
+    
+    // Wait for animations to complete then navigate
+    await Future.delayed(const Duration(seconds: 4));
+    if (mounted) {
+      _navigateToAuth();
+    }
+  }
+
+  void _navigateToAuth() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.checkAuthStatus();
+    
+    if (!mounted) return;
+    
+    if (authProvider.token != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _pageController.dispose();
+    _logoController.dispose();
+    _fadeController.dispose();
+    _scaleController.dispose();
+    _textSlideController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
+    return GestureDetector(
+      onTap: _navigateToAuth, // Allow tap to skip animation
+      child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -101,134 +142,88 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ],
             ),
           ),
-          child: const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.shade900,
-              Colors.purple.shade800,
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              itemCount: _onboardingData.length,
-              onPageChanged: (int page) {
-                setState(() {
-                  _currentPage = page;
-                });
-              },
-              itemBuilder: (context, index) {
-                return Container(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Icon(
-                          _onboardingData[index]['icon'] as IconData,
-                          size: 80,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      Text(
-                        _onboardingData[index]['title'] as String,
-                        style: GoogleFonts.poppins(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        _onboardingData[index]['description'] as String,
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+          child: Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Animated Logo (background)
+                FadeTransition(
+                  opacity: _logoAnimation,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: Image.asset(
+                      'assets/images/mindcare_logo.png',
+                      width: MediaQuery.of(context).size.width * 1.6,
+                      height: MediaQuery.of(context).size.width * 1.6,
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                );
-              },
-            ),
-            Positioned(
-              bottom: 50,
-              left: 0,
-              right: 0,
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _onboardingData.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 5),
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _currentPage == index
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.3),
-                        ),
+                ),
+                // Animated Text (overlay)
+                SlideTransition(
+                  position: _textSlideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Container(
+                      margin: const EdgeInsets.only(top:300),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Text(
+                              'MindCare',
+                              style: GoogleFonts.poppins(
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Your mental health companion',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  if (_currentPage == _onboardingData.length - 1)
-                    Container(
-                      width: 200,
-                      child: ElevatedButton(
-                        onPressed: _finishOnboarding,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.blue.shade900,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
+                ),
+                // Loading indicator at bottom
+                Positioned(
+                  bottom: -100,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white.withOpacity(0.6),
                         ),
-                        child: Text(
-                          'Get Started',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        strokeWidth: 2,
                       ),
                     ),
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

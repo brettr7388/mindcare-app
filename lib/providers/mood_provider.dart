@@ -17,6 +17,39 @@ class MoodProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get hasMoodForToday => _todayMood != null;
 
+  // Calculate current mood logging streak
+  int get currentStreak {
+    if (_moods.isEmpty) return 0;
+    
+    final sortedMoods = List<Mood>.from(_moods)
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    
+    int streak = 0;
+    DateTime currentDate = DateTime.now();
+    
+    for (int i = 0; i < sortedMoods.length; i++) {
+      final moodDate = DateTime(
+        sortedMoods[i].timestamp.year,
+        sortedMoods[i].timestamp.month,
+        sortedMoods[i].timestamp.day,
+      );
+      
+      final checkDate = DateTime(
+        currentDate.year,
+        currentDate.month,
+        currentDate.day,
+      ).subtract(Duration(days: i));
+      
+      if (moodDate.isAtSameMomentAs(checkDate)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  }
+
   Future<void> fetchMoods() async {
     try {
       _isLoading = true;

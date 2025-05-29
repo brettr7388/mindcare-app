@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
@@ -9,7 +8,6 @@ import '../main.dart';
 
 class AuthProvider with ChangeNotifier {
   final String _baseUrl = 'http://10.132.188.218:3000/api';
-  final _storage = const FlutterSecureStorage();
   bool _isAuthenticated = false;
   String? _token;
   String? _userId;
@@ -50,12 +48,6 @@ class AuthProvider with ChangeNotifier {
         _userName = data['name'];
         _userEmail = data['email'];
         _isAuthenticated = true;
-
-        // Store user data in secure storage
-        await _storage.write(key: 'token', value: _token);
-        await _storage.write(key: 'userId', value: _userId);
-        await _storage.write(key: 'userName', value: _userName);
-        await _storage.write(key: 'userEmail', value: _userEmail);
 
         // Fetch moods after successful login
         if (navigatorKey.currentContext != null) {
@@ -100,10 +92,6 @@ class AuthProvider with ChangeNotifier {
         _userEmail = data['email'];
         _isAuthenticated = true;
         
-        await _storage.write(key: 'token', value: _token);
-        await _storage.write(key: 'userName', value: _userName);
-        await _storage.write(key: 'userEmail', value: _userEmail);
-        
         notifyListeners();
       } else {
         throw Exception('Failed to signup');
@@ -118,15 +106,15 @@ class AuthProvider with ChangeNotifier {
     _userName = null;
     _userEmail = null;
     _isAuthenticated = false;
-    await _storage.deleteAll();
     notifyListeners();
   }
 
   Future<void> checkAuthStatus() async {
-    _token = await _storage.read(key: 'token');
-    _userName = await _storage.read(key: 'userName');
-    _userEmail = await _storage.read(key: 'userEmail');
-    _isAuthenticated = _token != null;
+    // Always start with no authentication - no persistence
+    _token = null;
+    _userName = null;
+    _userEmail = null;
+    _isAuthenticated = false;
     notifyListeners();
   }
 } 

@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import '../providers/mood_provider.dart';
 import 'auth_screen.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -31,11 +29,9 @@ class ProfileScreen extends StatelessWidget {
               children: const [
                 _UserIdentitySection(),
                 SizedBox(height: 16),
-                _MoodSummarySection(),
+                _StatsSection(),
                 SizedBox(height: 16),
-                _GoalsSection(),
-                SizedBox(height: 16),
-                _SelfCareToolkitSection(),
+                _WellnessInsightsSection(),
                 SizedBox(height: 16),
                 _SettingsSection(),
               ],
@@ -52,77 +48,125 @@ class _UserIdentitySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Stack(
-            alignment: Alignment.center,
+    return Consumer2<AuthProvider, MoodProvider>(
+      builder: (context, authProvider, moodProvider, child) {
+        final activeDays = _calculateActiveDays(moodProvider.moods);
+        
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Column(
             children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.2),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.2),
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      size: 64,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  size: 64,
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                authProvider.userName ?? 'User Name',
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                '$activeDays Days Active',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.white.withOpacity(0.8),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                authProvider.userEmail ?? 'user@mindcare.com',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.7),
+                ),
+              ),
+              if (moodProvider.moods.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '"${_getMotivationalQuote(moodProvider.moods)}"',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            authProvider.userName ?? 'User Name',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '7 Days Active',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '"Taking it one day at a time"',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontStyle: FontStyle.italic,
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  int _calculateActiveDays(List moods) {
+    if (moods.isEmpty) return 0;
+    
+    final uniqueDays = <String>{};
+    for (final mood in moods) {
+      if (mood.timestamp != null) {
+        final date = mood.timestamp;
+        final dayKey = '${date.year}-${date.month}-${date.day}';
+        uniqueDays.add(dayKey);
+      }
+    }
+    return uniqueDays.length;
+  }
+
+  String _getMotivationalQuote(List moods) {
+    if (moods.isEmpty) return 'Starting your wellness journey!';
+    
+    final totalMoods = moods.length;
+    final averageRating = moods.fold<double>(0, (sum, mood) => sum + mood.rating) / totalMoods;
+    
+    if (totalMoods >= 30) {
+      return 'Consistency champion! 🏆';
+    } else if (totalMoods >= 14) {
+      return 'Building great habits! 💪';
+    } else if (totalMoods >= 7) {
+      return 'One week strong! 🌟';
+    } else if (averageRating >= 4) {
+      return 'Spreading positivity! ✨';
+    } else {
+      return 'Taking it one day at a time 🌱';
+    }
   }
 }
 
-class _MoodSummarySection extends StatelessWidget {
-  const _MoodSummarySection();
+class _StatsSection extends StatelessWidget {
+  const _StatsSection();
 
   @override
   Widget build(BuildContext context) {
@@ -137,156 +181,128 @@ class _MoodSummarySection extends StatelessWidget {
           width: 1,
         ),
       ),
+      child: Consumer<MoodProvider>(
+        builder: (context, moodProvider, child) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Your Wellness Stats',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      'Total Moods Logged',
+                      '${moodProvider.moods.length}',
+                      Icons.mood,
+                      Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildStatCard(
+                      'Days Active',
+                      _calculateActiveDays(moodProvider.moods).toString(),
+                      Icons.calendar_today,
+                      Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      'Average Mood',
+                      _calculateAverageMood(moodProvider.moods),
+                      Icons.trending_up,
+                      Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildStatCard(
+                      'Current Streak',
+                      _calculateStreak(moodProvider.moods).toString(),
+                      Icons.local_fire_department,
+                      Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildMoodBreakdown(moodProvider.moods),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
-            'Mood & Progress Summary',
+            value,
             style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 24),
-          const _MoodCalendar(),
-          const SizedBox(height: 24),
-          const _MoodTrendGraph(),
-          const SizedBox(height: 24),
-          const _MoodStats(),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.8),
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
-}
 
-class _MoodCalendar extends StatelessWidget {
-  const _MoodCalendar();
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final firstDay = DateTime(now.year, now.month - 3, 1); // 3 months ago
-    final lastDay = DateTime(now.year, now.month + 3, 0); // 3 months ahead
-
-    return TableCalendar(
-      firstDay: firstDay,
-      lastDay: lastDay,
-      focusedDay: now,
-      currentDay: now,
-      calendarFormat: CalendarFormat.month,
-      startingDayOfWeek: StartingDayOfWeek.monday,
-      calendarStyle: CalendarStyle(
-        defaultTextStyle: GoogleFonts.poppins(color: Colors.white),
-        weekendTextStyle: GoogleFonts.poppins(color: Colors.white.withOpacity(0.7)),
-        outsideTextStyle: GoogleFonts.poppins(color: Colors.white.withOpacity(0.3)),
-        todayDecoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.3),
-          shape: BoxShape.circle,
-        ),
-        selectedDecoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-      ),
-      headerStyle: HeaderStyle(
-        titleTextStyle: GoogleFonts.poppins(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-        formatButtonVisible: false,
-        leftChevronIcon: const Icon(Icons.chevron_left, color: Colors.white),
-        rightChevronIcon: const Icon(Icons.chevron_right, color: Colors.white),
-      ),
-      selectedDayPredicate: (day) => isSameDay(day, now),
-      onDaySelected: (selectedDay, focusedDay) {
-        // Handle day selection
-      },
-    );
-  }
-}
-
-class _MoodTrendGraph extends StatelessWidget {
-  const _MoodTrendGraph();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 200,
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    value.toInt().toString(),
-                    style: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  );
-                },
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    value.toInt().toString(),
-                    style: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  );
-                },
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                const FlSpot(0, 3),
-                const FlSpot(1, 4),
-                const FlSpot(2, 3.5),
-                const FlSpot(3, 5),
-                const FlSpot(4, 4),
-                const FlSpot(5, 4.5),
-                const FlSpot(6, 4),
-              ],
-              isCurved: true,
-              color: Colors.white,
-              barWidth: 2,
-              dotData: FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                color: Colors.white.withOpacity(0.1),
-                ),
-              ),
-            ],
-          ),
-      ),
-    );
-  }
-}
-
-class _MoodStats extends StatelessWidget {
-  const _MoodStats();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMoodBreakdown(List moods) {
+    final moodCounts = _getMoodCounts(moods);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Mood Log Stats',
+          'Mood Breakdown',
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -294,45 +310,138 @@ class _MoodStats extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _buildStatRow('Most common mood this month', 'Happy 😊'),
-        const SizedBox(height: 8),
-        _buildStatRow('Good days', '15'),
-        const SizedBox(height: 8),
-        _buildStatRow('Neutral days', '10'),
-        const SizedBox(height: 8),
-        _buildStatRow('Tough days', '5'),
-        const SizedBox(height: 8),
-        _buildStatRow('Days logged', '25/30'),
+        ...moodCounts.entries.map((entry) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: [
+              Text(
+                _getMoodEmoji(entry.key),
+                style: const TextStyle(fontSize: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _getMoodText(entry.key),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ),
+              Text(
+                '${entry.value}',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        )).toList(),
       ],
     );
   }
 
-  Widget _buildStatRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-          label,
-          style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.8),
-            ),
-          ),
-          Text(
-            value,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ],
-    );
+  int _calculateActiveDays(List moods) {
+    if (moods.isEmpty) return 0;
+    
+    final uniqueDays = <String>{};
+    for (final mood in moods) {
+      if (mood.timestamp != null) {
+        final date = mood.timestamp;
+        final dayKey = '${date.year}-${date.month}-${date.day}';
+        uniqueDays.add(dayKey);
+      }
+    }
+    return uniqueDays.length;
+  }
+
+  String _calculateAverageMood(List moods) {
+    if (moods.isEmpty) return 'N/A';
+    
+    final total = moods.fold<double>(0, (sum, mood) => sum + mood.rating);
+    final average = total / moods.length;
+    return average.toStringAsFixed(1);
+  }
+
+  int _calculateStreak(List moods) {
+    if (moods.isEmpty) return 0;
+    
+    // Sort moods by date (newest first)
+    final sortedMoods = List.from(moods);
+    sortedMoods.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    
+    int streak = 0;
+    DateTime? lastDate;
+    
+    for (final mood in sortedMoods) {
+      final currentDate = DateTime(
+        mood.timestamp.year,
+        mood.timestamp.month,
+        mood.timestamp.day,
+      );
+      
+      if (lastDate == null) {
+        // First mood, check if it's today or yesterday
+        final today = DateTime.now();
+        final todayDate = DateTime(today.year, today.month, today.day);
+        final yesterdayDate = todayDate.subtract(const Duration(days: 1));
+        
+        if (currentDate == todayDate || currentDate == yesterdayDate) {
+          streak = 1;
+          lastDate = currentDate;
+        } else {
+          break;
+        }
+      } else {
+        // Check if this mood is from the previous day
+        final expectedDate = lastDate.subtract(const Duration(days: 1));
+        if (currentDate == expectedDate) {
+          streak++;
+          lastDate = currentDate;
+        } else {
+          break;
+        }
+      }
+    }
+    
+    return streak;
+  }
+
+  Map<int, int> _getMoodCounts(List moods) {
+    final counts = <int, int>{1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    for (final mood in moods) {
+      counts[mood.rating] = (counts[mood.rating] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  String _getMoodEmoji(int rating) {
+    switch (rating) {
+      case 1: return '😢';
+      case 2: return '😕';
+      case 3: return '😐';
+      case 4: return '😊';
+      case 5: return '😄';
+      default: return '😐';
+    }
+  }
+
+  String _getMoodText(int rating) {
+    switch (rating) {
+      case 1: return 'Very Sad';
+      case 2: return 'Sad';
+      case 3: return 'Neutral';
+      case 4: return 'Happy';
+      case 5: return 'Very Happy';
+      default: return 'Neutral';
+    }
   }
 }
 
-class _GoalsSection extends StatelessWidget {
-  const _GoalsSection();
+class _WellnessInsightsSection extends StatelessWidget {
+  const _WellnessInsightsSection();
 
   @override
   Widget build(BuildContext context) {
@@ -350,106 +459,26 @@ class _GoalsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Goals & Achievements',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add, color: Colors.white),
-                onPressed: () {
-                  // Add new goal
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildGoalItem(
-            'Practice gratitude',
-            '3 times this week',
-            0.6,
-          ),
-          const SizedBox(height: 16),
-          _buildGoalItem(
-            'Meditation',
-            '10 minutes daily',
-            0.8,
-          ),
-          const SizedBox(height: 24),
           Text(
-            'Recent Achievements',
+            'Wellness Insights',
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 16),
-          _buildAchievement('7 Day Streak 🔥', 'Logged mood for a week straight'),
+          _buildInsightItem('Stress Level', 'Low'),
           const SizedBox(height: 12),
-          _buildAchievement('Mindfulness Master 🧘', 'Completed 5 meditation sessions'),
+          _buildInsightItem('Mood Stability', 'High'),
           const SizedBox(height: 12),
-          _buildAchievement('Reflection Pro ✍️', 'Wrote 3 journal entries'),
+          _buildInsightItem('Mental Health Awareness', 'Good'),
         ],
       ),
     );
   }
 
-  Widget _buildGoalItem(String title, String subtitle, double progress) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 16,
-                      fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-                  Text(
-        subtitle,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          color: Colors.white.withOpacity(0.8),
-        ),
-      ),
-                ],
-              ),
-            ),
-            Text(
-              '${(progress * 100).round()}%',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: progress,
-          backgroundColor: Colors.white.withOpacity(0.2),
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAchievement(String title, String description) {
+  Widget _buildInsightItem(String title, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -475,116 +504,7 @@ class _GoalsSection extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  description,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.emoji_events,
-            color: Colors.amber,
-            size: 32,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SelfCareToolkitSection extends StatelessWidget {
-  const _SelfCareToolkitSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-            'Self-Care Toolkit',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildToolkitItem(
-            'Saved Resources',
-            '5 videos, 3 articles',
-            Icons.bookmark,
-          ),
-          const SizedBox(height: 12),
-          _buildToolkitItem(
-            'Coping Strategies',
-            '8 favorite techniques',
-            Icons.psychology,
-          ),
-          const SizedBox(height: 12),
-          _buildToolkitItem(
-            'My Affirmations',
-            '6 personal mantras',
-            Icons.favorite,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToolkitItem(String title, String subtitle, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-            icon,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-          Text(
-            title,
-                  style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  subtitle,
+                  value,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     color: Colors.white.withOpacity(0.8),
