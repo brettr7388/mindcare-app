@@ -8,18 +8,18 @@ import '../main.dart';
 
 class AuthProvider with ChangeNotifier {
   final String _baseUrl = 'http://10.132.188.218:3000/api';
-  bool _isAuthenticated = false;
   String? _token;
-  String? _userId;
   String? _userName;
   String? _userEmail;
+  String? _profilePictureUrl;
+  bool _isAuthenticated = false;
   bool _isLoading = false;
 
-  bool get isAuthenticated => _isAuthenticated;
   String? get token => _token;
-  String? get userId => _userId;
   String? get userName => _userName;
   String? get userEmail => _userEmail;
+  String? get profilePictureUrl => _profilePictureUrl;
+  bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
 
   Future<void> login(String email, String password) async {
@@ -44,9 +44,11 @@ class AuthProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         _token = data['token'];
-        _userId = data['userId'];
         _userName = data['name'];
         _userEmail = data['email'];
+        _profilePictureUrl = data['profilePicture'] != null 
+            ? '$_baseUrl/../${data['profilePicture']}'
+            : null;
         _isAuthenticated = true;
 
         // Fetch moods after successful login
@@ -90,6 +92,9 @@ class AuthProvider with ChangeNotifier {
         _token = data['token'];
         _userName = data['name'];
         _userEmail = data['email'];
+        _profilePictureUrl = data['profilePicture'] != null 
+            ? '$_baseUrl/../${data['profilePicture']}'
+            : null;
         _isAuthenticated = true;
         
         notifyListeners();
@@ -105,8 +110,99 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _userName = null;
     _userEmail = null;
+    _profilePictureUrl = null;
     _isAuthenticated = false;
     notifyListeners();
+  }
+
+  Future<void> updateProfile(String name) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final response = await http.put(
+        Uri.parse('$_baseUrl/auth/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+        body: json.encode({
+          'name': name,
+        }),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Connection timed out. Please check your internet connection and try again.');
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _userName = data['name'];
+        _profilePictureUrl = data['profilePicture'] != null 
+            ? '$_baseUrl/../${data['profilePicture']}'
+            : null;
+        notifyListeners();
+      } else {
+        final data = json.decode(response.body);
+        throw Exception(data['message'] ?? 'Failed to update profile');
+      }
+    } on TimeoutException {
+      throw Exception('Connection timed out. Please check your internet connection and try again.');
+    } catch (e) {
+      if (e.toString().contains('Failed host lookup')) {
+        throw Exception('Could not connect to the server. Please check your internet connection and try again.');
+      }
+      throw Exception('Error updating profile: ${e.toString()}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> uploadProfilePicture(String imagePath) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_baseUrl/auth/profile/upload-picture'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $_token';
+      request.files.add(await http.MultipartFile.fromPath('profilePicture', imagePath));
+
+      final response = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw TimeoutException('Upload timed out. Please check your internet connection and try again.');
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final data = json.decode(responseBody);
+        _profilePictureUrl = data['profilePicture'] != null 
+            ? '$_baseUrl/../${data['profilePicture']}'
+            : null;
+        notifyListeners();
+      } else {
+        final responseBody = await response.stream.bytesToString();
+        final data = json.decode(responseBody);
+        throw Exception(data['message'] ?? 'Failed to upload profile picture');
+      }
+    } on TimeoutException {
+      throw Exception('Upload timed out. Please check your internet connection and try again.');
+    } catch (e) {
+      if (e.toString().contains('Failed host lookup')) {
+        throw Exception('Could not connect to the server. Please check your internet connection and try again.');
+      }
+      throw Exception('Error uploading profile picture: ${e.toString()}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> checkAuthStatus() async {
@@ -114,6 +210,7 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _userName = null;
     _userEmail = null;
+    _profilePictureUrl = null;
     _isAuthenticated = false;
     notifyListeners();
   }

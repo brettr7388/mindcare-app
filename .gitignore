@@ -84,3 +84,6 @@ Thumbs.db
 
 # Local development
 *.local
+
+# User uploads (profile pictures, etc.)
+backend/uploads/

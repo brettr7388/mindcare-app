@@ -129,113 +129,140 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildProfilePhotoSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Profile Photo',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 2,
-                  ),
-                ),
-                child: _selectedAvatar != null
-                    ? ClipOval(
-                        child: Image.file(
-                          File(_selectedAvatar!),
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Icon(
-                        Icons.add_a_photo,
-                        color: Colors.white.withOpacity(0.8),
-                        size: 40,
-                      ),
+            Text(
+              'Profile Photo',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Upload Photo',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                        width: 2,
+                      ),
                     ),
+                    child: _selectedAvatar != null
+                        ? ClipOval(
+                            child: Image.file(
+                              File(_selectedAvatar!),
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : _selectedDefaultIcon != null
+                            ? Center(
+                                child: Text(
+                                  _selectedDefaultIcon!,
+                                  style: const TextStyle(fontSize: 48),
+                                ),
+                              )
+                            : authProvider.profilePictureUrl != null
+                                ? ClipOval(
+                                    child: Image.network(
+                                      authProvider.profilePictureUrl!,
+                                      fit: BoxFit.cover,
+                                      width: 100,
+                                      height: 100,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Icon(
+                                          Icons.add_a_photo,
+                                          color: Colors.white.withOpacity(0.8),
+                                          size: 40,
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.add_a_photo,
+                                    color: Colors.white.withOpacity(0.8),
+                                    size: 40,
+                                  ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Or choose a default icon below',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.8),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Upload Photo',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Or choose a default icon below',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 60,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _defaultIcons.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedDefaultIcon = _defaultIcons[index];
+                        _selectedAvatar = null;
+                      });
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedDefaultIcon == _defaultIcons[index]
+                            ? Colors.white.withOpacity(0.3)
+                            : Colors.white.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _defaultIcons[index],
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 60,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _defaultIcons.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedDefaultIcon = _defaultIcons[index];
-                    _selectedAvatar = null;
-                  });
-                },
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    color: _selectedDefaultIcon == _defaultIcons[index]
-                        ? Colors.white.withOpacity(0.3)
-                        : Colors.white.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _defaultIcons[index],
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -255,6 +282,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         TextFormField(
           controller: _nameController,
           style: GoogleFonts.poppins(color: Colors.white),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Name is required';
+            }
+            if (value.trim().length < 2) {
+              return 'Name must be at least 2 characters';
+            }
+            return null;
+          },
           decoration: InputDecoration(
             hintText: 'Enter your preferred name',
             hintStyle: GoogleFonts.poppins(
@@ -279,6 +315,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               borderSide: const BorderSide(
                 color: Colors.white,
               ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Colors.red,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Colors.red,
+              ),
+            ),
+            errorStyle: GoogleFonts.poppins(
+              color: Colors.red.shade300,
             ),
           ),
         ),
@@ -570,10 +621,69 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement profile saving logic
-      Navigator.pop(context);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final newName = _nameController.text.trim();
+      
+      try {
+        // Show loading indicator
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        );
+        
+        // Upload image first if selected
+        if (_selectedAvatar != null) {
+          await authProvider.uploadProfilePicture(_selectedAvatar!);
+        }
+        
+        // Update profile name if changed
+        if (newName != authProvider.userName) {
+          await authProvider.updateProfile(newName);
+        }
+        
+        // Close loading indicator
+        if (mounted) Navigator.pop(context);
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Profile updated successfully!',
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        
+        // Go back to profile screen
+        if (mounted) Navigator.pop(context);
+        
+      } catch (e) {
+        // Close loading indicator if still showing
+        if (mounted) Navigator.pop(context);
+        
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                e.toString().replaceAll('Exception: ', ''),
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 } 

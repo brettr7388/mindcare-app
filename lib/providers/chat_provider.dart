@@ -20,10 +20,17 @@ class Message {
 class ChatProvider with ChangeNotifier {
   List<Message> _messages = [];
   bool _isLoading = false;
+  bool _isTyping = false;
   static const String _baseUrl = 'http://10.132.188.218:3000/api';
 
   List<Message> get messages => _messages;
   bool get isLoading => _isLoading;
+  bool get isTyping => _isTyping;
+
+  void _setTyping(bool typing) {
+    _isTyping = typing;
+    notifyListeners();
+  }
 
   void addWelcomeMessage() {
     if (_messages.isEmpty) {
@@ -55,6 +62,12 @@ class ChatProvider with ChangeNotifier {
       _messages.add(userMessage);
       notifyListeners();
 
+      // Show typing indicator
+      _setTyping(true);
+
+      // Add a small delay to make typing indicator visible
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final response = await http.post(
         Uri.parse('$_baseUrl/chat'),
         headers: {
@@ -73,6 +86,13 @@ class ChatProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        
+        // Hide typing indicator before adding AI message
+        _setTyping(false);
+        
+        // Add another small delay for smooth transition
+        await Future.delayed(const Duration(milliseconds: 300));
+        
         final aiMessage = Message(
           content: data['response'],
           isUser: false,
@@ -85,12 +105,14 @@ class ChatProvider with ChangeNotifier {
         throw Exception(errorMessage);
       }
     } on TimeoutException {
+      _setTyping(false);
       _messages.add(Message(
         content: 'Sorry, the request timed out. Please check your internet connection and try again.',
         isUser: false,
         timestamp: DateTime.now(),
       ));
     } catch (e) {
+      _setTyping(false);
       String errorMessage = 'Sorry, there was an error processing your message.';
       
       if (e.toString().contains('Not authenticated')) {
@@ -108,6 +130,7 @@ class ChatProvider with ChangeNotifier {
       ));
     } finally {
       _isLoading = false;
+      _setTyping(false);
       notifyListeners();
     }
   }
@@ -127,8 +150,9 @@ class ChatProvider with ChangeNotifier {
         },
       );
 
-      // Clear local messages
+      // Clear local messages and reset typing state
       _messages.clear();
+      _setTyping(false);
       notifyListeners();
     } catch (e) {
       print('❌ Error clearing conversation: $e');

@@ -44,7 +44,7 @@ class WellnessScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _WellnessSection(
-                        title: 'Meditation',
+                        title: '🧘‍♀️ Meditation',
                         items: [
                           WellnessItem(
                             title: 'Guided Meditation',
@@ -58,11 +58,35 @@ class WellnessScreen extends StatelessWidget {
                             icon: Icons.air,
                             url: 'https://www.youtube.com/watch?v=uNeoLT1axSI',
                           ),
+                          WellnessItem(
+                            title: 'Body Scan Meditation',
+                            description: '10-minute full body relaxation and awareness',
+                            icon: Icons.accessibility_new,
+                            url: 'https://www.youtube.com/watch?v=15q-N-_kkrU',
+                          ),
+                          WellnessItem(
+                            title: 'Mindfulness for Beginners',
+                            description: '8-minute introduction to mindful awareness',
+                            icon: Icons.lightbulb_outline,
+                            url: 'https://www.youtube.com/watch?v=ZToicYcHIOU',
+                          ),
+                          WellnessItem(
+                            title: 'Sleep Meditation',
+                            description: '20-minute guided meditation for better sleep',
+                            icon: Icons.bedtime,
+                            url: 'https://www.youtube.com/watch?v=aEqlQvczMJQ',
+                          ),
+                          WellnessItem(
+                            title: 'Morning Meditation',
+                            description: '7-minute energizing start to your day',
+                            icon: Icons.wb_sunny,
+                            url: 'https://www.youtube.com/watch?v=O-6f5wQXSu8',
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
                       _WellnessSection(
-                        title: 'Peaceful Music',
+                        title: '🎵 Peaceful Music',
                         items: [
                           WellnessItem(
                             title: 'Calming Nature Sounds',
@@ -76,11 +100,47 @@ class WellnessScreen extends StatelessWidget {
                             icon: Icons.music_note,
                             url: 'https://www.youtube.com/watch?v=1ZYbU82GVz4',
                           ),
+                          WellnessItem(
+                            title: 'Ocean Waves',
+                            description: 'Peaceful ocean sounds for relaxation',
+                            icon: Icons.waves,
+                            url: 'https://www.youtube.com/watch?v=V1bFr2SWP1I',
+                          ),
+                          WellnessItem(
+                            title: 'Rain Sounds',
+                            description: 'Gentle rainfall for focus and calm',
+                            icon: Icons.grain,
+                            url: 'https://www.youtube.com/watch?v=mPZkdNFkNps',
+                          ),
+                          WellnessItem(
+                            title: 'Forest Ambience',
+                            description: 'Birds chirping and rustling leaves',
+                            icon: Icons.park,
+                            url: 'https://www.youtube.com/watch?v=xNN7iTA57jM',
+                          ),
+                          WellnessItem(
+                            title: 'Piano Instrumental',
+                            description: 'Soft piano melodies for stress relief',
+                            icon: Icons.piano,
+                            url: 'https://www.youtube.com/watch?v=lFcSrYw-ARY',
+                          ),
+                          WellnessItem(
+                            title: 'Tibetan Singing Bowls',
+                            description: 'Ancient healing sounds for deep relaxation',
+                            icon: Icons.circle_outlined,
+                            url: 'https://www.youtube.com/watch?v=gQz_6FaRMyg',
+                          ),
+                          WellnessItem(
+                            title: 'White Noise',
+                            description: 'Steady background noise for concentration',
+                            icon: Icons.blur_on,
+                            url: 'https://www.youtube.com/watch?v=nMfPqeZjc2c',
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
                       _WellnessSection(
-                        title: 'Mind Games',
+                        title: '🎮 Mind Games',
                         items: [
                           WellnessItem(
                             title: 'Bubble Pop',

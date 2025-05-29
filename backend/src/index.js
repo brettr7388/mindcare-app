@@ -19,6 +19,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serve static files (uploaded images)
+app.use('/uploads', express.static('uploads'));
+
 // Add request logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);

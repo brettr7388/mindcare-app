@@ -10,14 +10,31 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _showWelcome = true;
+  late AnimationController _typingController;
+  late Animation<double> _typingAnimation;
 
   @override
   void initState() {
     super.initState();
+    
+    // Initialize typing animation controller
+    _typingController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
+    _typingAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _typingController,
+      curve: Curves.easeInOut,
+    ));
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ChatProvider>(context, listen: false).addWelcomeMessage();
     });
@@ -27,6 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _typingController.dispose();
     super.dispose();
   }
 
@@ -199,15 +217,30 @@ class _ChatScreenState extends State<ChatScreen> {
               Expanded(
                 child: Consumer<ChatProvider>(
                   builder: (context, chatProvider, child) {
+                    // Start typing animation when AI is typing
+                    if (chatProvider.isTyping) {
+                      _typingController.repeat();
+                    } else {
+                      _typingController.stop();
+                      _typingController.reset();
+                    }
+
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.all(16),
-                      itemCount: chatProvider.messages.length,
+                      itemCount: chatProvider.messages.length + (chatProvider.isTyping ? 1 : 0),
                       itemBuilder: (context, index) {
+                        // Show typing indicator as last item when AI is typing
+                        if (chatProvider.isTyping && index == chatProvider.messages.length) {
+                          return _TypingIndicator(animation: _typingAnimation);
+                        }
+                        
                         final message = chatProvider.messages[index];
-                        return _ChatBubble(
+                        return _AnimatedChatBubble(
+                          key: ValueKey('${message.timestamp.millisecondsSinceEpoch}-${message.isUser}'),
                           message: message.content,
                           isUser: message.isUser,
+                          index: index,
                         );
                       },
                     );
@@ -288,6 +321,151 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedChatBubble extends StatefulWidget {
+  final String message;
+  final bool isUser;
+  final int index;
+
+  const _AnimatedChatBubble({
+    super.key,
+    required this.message,
+    required this.isUser,
+    required this.index,
+  });
+
+  @override
+  State<_AnimatedChatBubble> createState() => _AnimatedChatBubbleState();
+}
+
+class _AnimatedChatBubbleState extends State<_AnimatedChatBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(widget.isUser ? 1.0 : -1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    // Delay animation based on index for staggered effect
+    Future.delayed(Duration(milliseconds: widget.index * 50), () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: _ChatBubble(
+          message: widget.message,
+          isUser: widget.isUser,
+        ),
+      ),
+    );
+  }
+}
+
+class _TypingIndicator extends StatelessWidget {
+  final Animation<double> animation;
+
+  const _TypingIndicator({required this.animation});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'AI is typing',
+              style: GoogleFonts.poppins(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(width: 8),
+            AnimatedBuilder(
+              animation: animation,
+              builder: (context, child) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (index) {
+                    final delay = index * 0.2;
+                    final animationValue = (animation.value - delay).clamp(0.0, 1.0);
+                    final opacity = (animationValue * 2).clamp(0.0, 1.0);
+                    
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      child: Opacity(
+                        opacity: opacity > 1.0 ? 2.0 - opacity : opacity,
+                        child: Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

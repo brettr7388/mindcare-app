@@ -79,11 +79,36 @@ class _UserIdentitySection extends StatelessWidget {
                         width: 2,
                       ),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 64,
-                      color: Colors.white,
-                    ),
+                    child: authProvider.profilePictureUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              authProvider.profilePictureUrl!,
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.person,
+                                  size: 64,
+                                  color: Colors.white,
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : const Icon(
+                            Icons.person,
+                            size: 64,
+                            color: Colors.white,
+                          ),
                   ),
                 ],
               ),
