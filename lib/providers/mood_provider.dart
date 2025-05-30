@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/mood.dart';
 import '../providers/auth_provider.dart';
+import '../config/api_config.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 
 class MoodProvider with ChangeNotifier {
-  final String _baseUrl = 'http://10.132.188.218:3000/api';
   List<Mood> _moods = [];
   Mood? _todayMood;
   bool _isLoading = false;
@@ -61,7 +61,7 @@ class MoodProvider with ChangeNotifier {
       }
 
       final response = await http.get(
-        Uri.parse('$_baseUrl/moods'),
+        Uri.parse('${ApiConfig.baseUrl}/moods'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authProvider.token}',
@@ -109,7 +109,7 @@ class MoodProvider with ChangeNotifier {
       }
 
       final response = await http.post(
-        Uri.parse('$_baseUrl/moods'),
+        Uri.parse('${ApiConfig.baseUrl}/moods'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authProvider.token}',
@@ -150,7 +150,7 @@ class MoodProvider with ChangeNotifier {
       }
 
       final response = await http.put(
-        Uri.parse('$_baseUrl/moods/$id'),
+        Uri.parse('${ApiConfig.baseUrl}/moods/$id'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authProvider.token}',

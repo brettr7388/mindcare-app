@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../config/api_config.dart';
 
 class Message {
   final String content;
@@ -21,7 +22,6 @@ class ChatProvider with ChangeNotifier {
   List<Message> _messages = [];
   bool _isLoading = false;
   bool _isTyping = false;
-  static const String _baseUrl = 'http://10.132.188.218:3000/api';
 
   List<Message> get messages => _messages;
   bool get isLoading => _isLoading;
@@ -69,7 +69,7 @@ class ChatProvider with ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 500));
 
       final response = await http.post(
-        Uri.parse('$_baseUrl/chat'),
+        Uri.parse('${ApiConfig.baseUrl}/chat'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authProvider.token}',
@@ -144,7 +144,7 @@ class ChatProvider with ChangeNotifier {
 
       // Clear conversation history on the server
       await http.post(
-        Uri.parse('$_baseUrl/chat/clear'),
+        Uri.parse('${ApiConfig.baseUrl}/chat/clear'),
         headers: {
           'Authorization': 'Bearer ${authProvider.token}',
         },

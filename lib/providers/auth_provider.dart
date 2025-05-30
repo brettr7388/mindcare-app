@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/mood_provider.dart';
+import '../config/api_config.dart';
 import '../main.dart';
 
 class AuthProvider with ChangeNotifier {
-  final String _baseUrl = 'http://10.132.188.218:3000/api';
   String? _token;
   String? _userName;
   String? _userEmail;
@@ -28,7 +28,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await http.post(
-        Uri.parse('$_baseUrl/auth/login'),
+        Uri.parse('${ApiConfig.baseUrl}/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
@@ -47,7 +47,7 @@ class AuthProvider with ChangeNotifier {
         _userName = data['name'];
         _userEmail = data['email'];
         _profilePictureUrl = data['profilePicture'] != null 
-            ? '$_baseUrl/../${data['profilePicture']}'
+            ? '${ApiConfig.baseUrl}/../${data['profilePicture']}'
             : null;
         _isAuthenticated = true;
 
@@ -78,7 +78,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> signup(String email, String password, String name) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/auth/signup'),
+        Uri.parse('${ApiConfig.baseUrl}/auth/signup'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
@@ -93,7 +93,7 @@ class AuthProvider with ChangeNotifier {
         _userName = data['name'];
         _userEmail = data['email'];
         _profilePictureUrl = data['profilePicture'] != null 
-            ? '$_baseUrl/../${data['profilePicture']}'
+            ? '${ApiConfig.baseUrl}/../${data['profilePicture']}'
             : null;
         _isAuthenticated = true;
         
@@ -121,7 +121,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await http.put(
-        Uri.parse('$_baseUrl/auth/profile'),
+        Uri.parse('${ApiConfig.baseUrl}/auth/profile'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
@@ -140,7 +140,7 @@ class AuthProvider with ChangeNotifier {
         final data = json.decode(response.body);
         _userName = data['name'];
         _profilePictureUrl = data['profilePicture'] != null 
-            ? '$_baseUrl/../${data['profilePicture']}'
+            ? '${ApiConfig.baseUrl}/../${data['profilePicture']}'
             : null;
         notifyListeners();
       } else {
@@ -167,7 +167,7 @@ class AuthProvider with ChangeNotifier {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('$_baseUrl/auth/profile/upload-picture'),
+        Uri.parse('${ApiConfig.baseUrl}/auth/profile/upload-picture'),
       );
 
       request.headers['Authorization'] = 'Bearer $_token';
@@ -184,7 +184,7 @@ class AuthProvider with ChangeNotifier {
         final responseBody = await response.stream.bytesToString();
         final data = json.decode(responseBody);
         _profilePictureUrl = data['profilePicture'] != null 
-            ? '$_baseUrl/../${data['profilePicture']}'
+            ? '${ApiConfig.baseUrl}/../${data['profilePicture']}'
             : null;
         notifyListeners();
       } else {
@@ -199,6 +199,43 @@ class AuthProvider with ChangeNotifier {
         throw Exception('Could not connect to the server. Please check your internet connection and try again.');
       }
       throw Exception('Error uploading profile picture: ${e.toString()}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteProfilePicture() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final response = await http.delete(
+        Uri.parse('${ApiConfig.baseUrl}/auth/profile/picture'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+        },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Connection timed out. Please check your internet connection and try again.');
+        },
+      );
+
+      if (response.statusCode == 200) {
+        _profilePictureUrl = null;
+        notifyListeners();
+      } else {
+        final data = json.decode(response.body);
+        throw Exception(data['message'] ?? 'Failed to delete profile picture');
+      }
+    } on TimeoutException {
+      throw Exception('Connection timed out. Please check your internet connection and try again.');
+    } catch (e) {
+      if (e.toString().contains('Failed host lookup')) {
+        throw Exception('Could not connect to the server. Please check your internet connection and try again.');
+      }
+      throw Exception('Error deleting profile picture: ${e.toString()}');
     } finally {
       _isLoading = false;
       notifyListeners();
