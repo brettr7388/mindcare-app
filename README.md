@@ -25,6 +25,7 @@ MindCare is a comprehensive mental health companion app built with Flutter and N
   - Mental health resources and articles
   - Self-care tips and recommendations
   - Emergency contacts and crisis support
+  - Stress free games
 
 ## Tech Stack
 
@@ -53,7 +54,7 @@ MindCare is a comprehensive mental health companion app built with Flutter and N
 - **OpenAI API Key** - [Get OpenAI API Key](https://platform.openai.com/api-keys)
 - **Git** - [Install Git](https://git-scm.com/)
 
-## Quick Start for Recruiters
+## Quick Start
 
 ### 1. Clone the Repository
 ```bash
@@ -267,8 +268,8 @@ MindCare/
 ## Demo Credentials
 
 For quick testing, you can create a test account or use these demo credentials if provided:
-- **Email**: demo@mindcare.app
-- **Password**: DemoPassword123
+- **Email**: test@test.com
+- **Password**: password123
 
 ## License
 
@@ -288,5 +289,3 @@ For questions about this project or feedback:
 - All contributors and supporters of the project
 
 ---
-
-**Note for Recruiters**: This project demonstrates full-stack mobile development skills including Flutter, Node.js, MongoDB, AI integration, and modern development practices. The app is fully functional and can be tested locally following the setup instructions above. 
