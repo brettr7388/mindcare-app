@@ -6,6 +6,8 @@
 
 TIKTOK PAGE DEMO LINK: https://www.tiktok.com/@mindcareapp
 
+SCREENSHOTS AT THE BOTTOM OF THIS README
+
 MindCare is a comprehensive mental health companion app built with Flutter and Node.js. It provides users with tools for mood tracking, AI-powered chat support, and mental health resources.
 
 ## Features
