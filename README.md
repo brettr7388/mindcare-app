@@ -259,7 +259,6 @@ If you prefer using Docker:
 - **Android**: Requires Android Studio and Android SDK
 - **Web**: Works with Chrome for testing
 
-
 ## Contributing
 
 1. Fork the repository
@@ -291,10 +290,29 @@ For questions about this project or feedback:
 - MongoDB Atlas for database hosting
 - All contributors and supporters of the project
 
+## Screenshots
 
-##Demo Images
+### App Interface Overview
 
+<div align="center">
 
----
+#### Loading & Authentication
+<img src="assets/images/Loading.PNG" alt="Loading Screen" width="250"/>
+<img src="assets/images/Login.PNG" alt="Login Screen" width="250"/>
+
+#### Home Dashboard
+<img src="assets/images/Home1.PNG" alt="Home Screen 1" width="250"/>
+<img src="assets/images/Home2.PNG" alt="Home Screen 2" width="250"/>
+
+#### AI Chat Support
+<img src="assets/images/Chat1.PNG" alt="Chat Interface 1" width="250"/>
+<img src="assets/images/Chat2.PNG" alt="Chat Interface 2" width="250"/>
+
+#### Wellness & Profile
+<img src="assets/images/Wellness.PNG" alt="Wellness Screen" width="250"/>
+<img src="assets/images/Profile1.PNG" alt="Profile Screen 1" width="250"/>
+<img src="assets/images/Profile2.PNG" alt="Profile Screen 2" width="250"/>
+
+</div>
 
 
