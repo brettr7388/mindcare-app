@@ -260,9 +260,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         );
       } else {
         await authProvider.signup(
-          _nameController.text.trim(),
           _emailController.text.trim(),
           _passwordController.text,
+          _nameController.text.trim(),
         );
         
         // Show success notification and animation
