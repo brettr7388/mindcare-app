@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const os = require('os');
 const authRoutes = require('./routes/auth');
 const moodRoutes = require('./routes/moods');
 const chatRoutes = require('./routes/chat');
@@ -39,6 +40,28 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
+// Function to get local network IP
+function getNetworkIP() {
+  const nets = os.networkInterfaces();
+  const results = {};
+
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+      if (net.family === 'IPv4' && !net.internal) {
+        if (!results[name]) {
+          results[name] = [];
+        }
+        results[name].push(net.address);
+      }
+    }
+  }
+
+  // Return the first available network IP
+  const interfaces = Object.values(results);
+  return interfaces.length > 0 ? interfaces[0][0] : 'localhost';
+}
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI, {
@@ -53,11 +76,13 @@ mongoose
     console.log('Connected to MongoDB');
     // Start server
     const PORT = process.env.PORT || 3000;
+    const networkIP = getNetworkIP();
+    
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT}`);
       console.log('Server is accessible at:');
       console.log(`- Local: http://localhost:${PORT}`);
-      console.log(`- Network: http://76.233.7.53:${PORT}`);
+      console.log(`- Network: http://${networkIP}:${PORT}`);
     });
   })
   .catch((err) => {

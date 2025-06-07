@@ -158,6 +158,36 @@ PORT=3000
 API_BASE_URL=http://localhost:3000/api
 ```
 
+### Important: API_BASE_URL Configuration
+
+The `API_BASE_URL` in your frontend `.env` file needs to be configured differently depending on your setup:
+
+**For local development (Flutter app and backend on same machine):**
+```env
+API_BASE_URL=http://localhost:3000/api
+```
+
+**For testing on physical devices or different machines:**
+1. Find your computer's IP address:
+   - **Windows**: Run `ipconfig` in Command Prompt
+   - **macOS/Linux**: Run `ifconfig` or `ip addr` in Terminal
+   - Look for your local network IP (usually starts with 192.168.x.x or 10.x.x.x)
+
+2. Update your frontend `.env` file:
+   ```env
+   API_BASE_URL=http://YOUR_IP_ADDRESS:3000/api
+   ```
+   
+   For example:
+   ```env
+   API_BASE_URL=http://192.168.1.100:3000/api
+   ```
+
+**Important Notes:**
+- Make sure both your development machine and test device are on the same network
+- If using a firewall, ensure port 3000 is accessible
+- For production deployment, use your server's public IP or domain name
+
 ## Testing the Application
 
 1. **Create an Account**: Sign up with a test email and password
@@ -223,39 +253,6 @@ If you prefer using Docker:
 - **Android**: Requires Android Studio and Android SDK
 - **Web**: Works with Chrome for testing
 
-## Project Structure
-
-```
-MindCare/
-├── lib/                    # Flutter app source code
-│   ├── config/            # Configuration files
-│   │   ├── config.dart    # Configuration constants
-│   │   └── theme.dart     # App theme configuration
-│   ├── models/            # Data models
-│   │   ├── mood.dart      # Mood model
-│   │   └── user.dart      # User model
-│   ├── providers/         # State management
-│   │   ├── auth_provider.dart  # Authentication provider
-│   │   ├── chat_provider.dart   # Chat provider
-│   │   └── mood_provider.dart   # Mood provider
-│   ├── screens/           # UI screens
-│   │   ├── auth_screens/      # Authentication screens
-│   │   ├── chat_screens/      # Chat screens
-│   │   └── mood_screens/      # Mood tracking screens
-│   ├── services/          # API services
-│   │   └── api_service.dart   # API service
-│   ├── utils/             # Utility functions
-│   └── widgets/           # Reusable UI components
-├── backend/               # Node.js backend
-│   ├── src/
-│   │   ├── controllers/   # Route controllers
-│   │   ├── middleware/    # Express middleware
-│   │   ├── models/        # MongoDB models
-│   │   └── routes/        # API routes
-│   └── uploads/           # File uploads storage
-├── assets/                # App assets (images, sounds, etc.)
-└── .env                   # Frontend environment variables
-```
 
 ## Contributing
 
@@ -279,7 +276,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions about this project or feedback:
 - Create an issue in this repository
-- Contact: [Your Email or LinkedIn]
+- Contact: [brettr7388@gmail.com]
 
 ## Acknowledgments
 
