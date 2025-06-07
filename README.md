@@ -1,5 +1,11 @@
 # MindCare - Mental Health Companion App
 
+<div align="center">
+  <img src="assets/images/mindcare_logo.png" alt="MindCare Logo" width="200"/>
+</div>
+
+TIKTOK PAGE DEMO LINK: https://www.tiktok.com/@mindcareapp
+
 MindCare is a comprehensive mental health companion app built with Flutter and Node.js. It provides users with tools for mood tracking, AI-powered chat support, and mental health resources.
 
 ## Features
@@ -285,4 +291,10 @@ For questions about this project or feedback:
 - MongoDB Atlas for database hosting
 - All contributors and supporters of the project
 
+
+##Demo Images
+
+
 ---
+
+
